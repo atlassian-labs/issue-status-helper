@@ -1,0 +1,50 @@
+modules:
+  trigger:
+    - key: issue-status-helper-update-trigger
+      function: trigger-main
+      events:
+        - avi:jira:updated:issue
+
+  jira:adminPage:
+    - key: issue-status-helper-admin-page
+      resource: config-main
+      resolver:
+        function: resolver
+      title: Issue Status Helper Config
+
+  function:
+    - key: resolver
+      handler: index.handler
+    - key: trigger-main
+      handler: index.run
+
+resources:
+  - key: config-main
+    path: static/admin-page/build
+    # tunnel:
+    #   port: 3000
+
+permissions:
+  scopes:
+    - storage:app
+    - read:jira-work
+    - write:jira-work
+    - read:field:jira
+    - read:field-configuration:jira
+    - read:project.avatar:jira
+    - read:avatar:jira
+
+  external:
+    images:
+      - "https://*.atlassian.net"
+
+  content:
+    styles:
+      - unsafe-inline
+
+app:
+  id: ari:cloud:ecosystem::app/c1686f11-2ee3-4fbc-94db-c43c01bdd608
+  features:
+    autoUserConsent: true
+  licensing:
+    enabled: false
