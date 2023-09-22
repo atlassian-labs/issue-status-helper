@@ -14,22 +14,23 @@ import {
 } from "./utils";
 
 export async function run(event: UpdateEvent) {
+  const changelogItems = event.changelog.items;
   console.log(
     `Detected that ${event.issue.key} has been updated`,
-    JSON.stringify(event.changelog.items)
+    JSON.stringify(changelogItems)
   );
 
   // Iterate over the items in the change log to verify whether or not a change of status
   // was part of this issue update event. We only want to perform any action if the status
   // has changed...
-  if (!shouldProcessIssueUpdate({ event })) {
+  if (!shouldProcessIssueUpdate({ changelogItems })) {
     console.log(
       `Issue ${event.issue.key} was updated but neither state change nor re-parenting occurred`
     );
     return;
   }
 
-  const parentChangeLogItem = getParentChangeLogItem({ event });
+  const parentChangeLogItem = getParentChangeLogItem({ changelogItems });
   const statusTransition = event.changelog.items.find(
     (change) => change.field === "status"
   );
@@ -39,7 +40,7 @@ export async function run(event: UpdateEvent) {
   const { id: issueId, fields: issueFields } = issue;
   const { parent: parentRef, project, customfield_10020: sprint } = issueFields;
 
-  const sprintChangeLogItem = getSprintChangeLogItem({ event });
+  const sprintChangeLogItem = getSprintChangeLogItem({ changelogItems });
   if (sprintChangeLogItem) {
     const projectPreferences: ProjectPreferences | undefined =
       await storage.get(
@@ -105,7 +106,7 @@ export async function run(event: UpdateEvent) {
     if (from || fromString) {
       console.log(`Updating previous parent: ${from || fromString}`);
       await updateParentStatus({
-        parentId: (from as string) || fromString,
+        parentId: (from as string) || (fromString as string),
         project,
         issue,
       });
@@ -113,7 +114,7 @@ export async function run(event: UpdateEvent) {
     if (to || toString) {
       console.log(`Updating new parent: ${to || toString}`);
       await updateParentStatus({
-        parentId: (to as string) || toString,
+        parentId: (to as string) || (toString as string),
         project,
         issue,
       });

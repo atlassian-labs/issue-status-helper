@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getParentChangeLogItem should return the parent change log item when company-managed parents are changed 1`] = `
+Object {
+  "field": "Epic Link",
+  "fieldId": "customfield_10014",
+  "fieldtype": "custom",
+  "from": null,
+  "fromString": null,
+  "to": "14647",
+  "toString": null,
+}
+`;
+
+exports[`getParentChangeLogItem should return the parent change log item when higher level parents are changed 1`] = `
+Object {
+  "field": "Parent Link",
+  "fieldId": "customfield_10018",
+  "fieldtype": "custom",
+  "from": null,
+  "fromString": null,
+  "to": null,
+  "toString": "BAM-3",
+}
+`;
+
+exports[`getParentChangeLogItem should return the parent change log item when team-managed parents are changed 1`] = `
+Object {
+  "field": "IssueParentAssociation",
+  "fieldtype": "jira",
+  "from": null,
+  "fromString": null,
+  "to": "14614",
+  "toString": null,
+}
+`;
+
+exports[`getSprintChangeLogItem should return the sprint change log item when sprints are changed 1`] = `
+Object {
+  "field": "Sprint",
+  "fieldId": "customfield_10020",
+  "fieldtype": "custom",
+  "from": "126",
+  "fromString": null,
+  "to": "127",
+  "toString": null,
+}
+`;

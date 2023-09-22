@@ -9,11 +9,11 @@ import {
 export type ChangeLogItem = {
   field: string;
   fieldtype: string;
-  fieldId: string;
+  fieldId?: string;
   from: unknown;
-  fromString: string;
+  fromString: string | null;
   to: unknown;
-  toString: string;
+  toString: string | null;
 };
 
 export type UpdateEvent = {
@@ -152,15 +152,15 @@ export type Sprint = {
 };
 
 export type ShouldProcessIssueUpdate = (args: {
-  event: UpdateEvent;
+  changelogItems: ChangeLogItem[];
 }) => boolean;
 
 export type GetParentChangeLogItem = (args: {
-  event: UpdateEvent;
+  changelogItems: ChangeLogItem[];
 }) => ChangeLogItem | undefined;
 
 export type GetSprintChangeLogItem = (args: {
-  event: UpdateEvent;
+  changelogItems: ChangeLogItem[];
 }) => ChangeLogItem | undefined;
 
 export type GenerateProjectIssueTypeStatusesStorageKey = (args: {

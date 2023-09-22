@@ -4,6 +4,8 @@ modules:
       function: trigger-main
       events:
         - avi:jira:updated:issue
+      filter:
+        ignoreSelf: true
 
   jira:adminPage:
     - key: issue-status-helper-admin-page

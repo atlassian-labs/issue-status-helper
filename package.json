@@ -5,12 +5,17 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "test": "jest",
     "lint": "./node_modules/.bin/eslint src/**/* || npm run --silent hook-errors",
     "hook-errors": "echo '\\x1b[31mThe build failed because a Forge UI hook is being used incorrectly. Forge UI hooks follow the same rules as React Hooks but have their own API definitions. See the Forge documentation for details on how to use Forge UI hooks.\n' && exit 1"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^28.1.7",
     "eslint": "^7.32.0",
-    "eslint-plugin-react-hooks": "^4.2.0"
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "jest": "^28.1.3",
+    "ts-jest": "^28.0.8"
   },
   "dependencies": {
     "@forge/api": "^2.18.3",

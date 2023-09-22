@@ -1,11 +1,9 @@
 import {
-  COMMENTS_SETTINGS_STORAGE_KEY,
   COMMON_PREFERRED_STATUSES_STORAGE_KEY,
   START_AND_END_FIELDS_STORAGE_KEY,
   SUPPORTED_PROJECTS_STORAGE_KEY,
 } from "../../static/admin-page/src/common/constants";
 import {
-  CommentPreferences,
   PreferredDateFields,
   PreferredStatuses,
   ProjectPreferences,
@@ -58,9 +56,9 @@ const higherLevelParentLinkField = "Parent Link";
  * Checks to see whether or not the issue update should be processed.
  */
 export const shouldProcessIssueUpdate: ShouldProcessIssueUpdate = ({
-  event,
+  changelogItems,
 }) => {
-  const shouldProcess = event.changelog.items.some((change) => {
+  const shouldProcess = changelogItems.some((change) => {
     const { field } = change;
     return (
       field === "Sprint" ||
@@ -73,8 +71,10 @@ export const shouldProcessIssueUpdate: ShouldProcessIssueUpdate = ({
   return shouldProcess;
 };
 
-export const getSprintChangeLogItem: GetSprintChangeLogItem = ({ event }) => {
-  return event.changelog.items.find((change) => {
+export const getSprintChangeLogItem: GetSprintChangeLogItem = ({
+  changelogItems,
+}) => {
+  return changelogItems.find((change) => {
     const { field } = change;
     if (field === "Sprint") {
       return change;
@@ -87,8 +87,10 @@ export const getSprintChangeLogItem: GetSprintChangeLogItem = ({ event }) => {
  * or "IssueParentAssociation" depending on the project type and hierarchy level. This may need updating
  * in the future when issue hierarchy is consolidated.
  */
-export const getParentChangeLogItem: GetParentChangeLogItem = ({ event }) => {
-  return event.changelog.items.find((change) => {
+export const getParentChangeLogItem: GetParentChangeLogItem = ({
+  changelogItems,
+}) => {
+  return changelogItems.find((change) => {
     const { field } = change;
     if (
       field === teamManagedParentField ||
