@@ -17,7 +17,7 @@ export async function run(event: UpdateEvent) {
   const changelogItems = event.changelog.items;
   console.log(
     `Detected that ${event.issue.key} has been updated`,
-    JSON.stringify(changelogItems)
+    changelogItems
   );
 
   // Iterate over the items in the change log to verify whether or not a change of status

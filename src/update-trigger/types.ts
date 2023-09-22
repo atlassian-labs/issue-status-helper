@@ -3,6 +3,7 @@ import {
   CustomField,
   IssueStatus,
   IssueStatusCategoryName,
+  PreferredStatuses,
   Project,
 } from "../../static/admin-page/src/common/types";
 
@@ -201,11 +202,11 @@ export type TransitionIssueWithComment = (args: {
 }) => Promise<void>;
 
 export type FindPreferredStatusId = (args: {
-  projectId: string;
   issueId: string;
-  issueTypeId: string;
   issueStatusCategoryName: string;
-}) => Promise<string | undefined>;
+  defaultPeferredStatuses: PreferredStatuses | undefined;
+  specificPreferredStatuses: PreferredStatuses | undefined;
+}) => string | undefined;
 
 export type UpdateIssueCustomField = (args: {
   issueIdOrKey: string;

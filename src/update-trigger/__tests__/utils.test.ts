@@ -1,16 +1,21 @@
 import { describe, expect, test } from "@jest/globals";
-import { ChangeLogItem } from "../types";
+import { ChangeLogItem, Sprint } from "../types";
 import {
   areAllChildrenDone,
   areAllChildrenToDo,
   areSomeChildrenInProgressOrDone,
+  findPreferredStatusId,
   generateProjectIssueTypeStatusesStorageKey,
   generateProjectPreferencesStorageKey,
   getParentChangeLogItem,
   getSprintChangeLogItem,
+  getSprintStartAndEndDates,
   shouldProcessIssueUpdate,
 } from "../utils";
 import {
+  activeSprint,
+  activeSprintWithoutDates,
+  closedSprint,
   companyManagedParentChangelogItems,
   higherLevelParentChangelogItems,
   sprintChangelogItems,
@@ -223,5 +228,118 @@ describe("areAllChildrenDone", () => {
         childStatusCategories: ["To Do", "Done", "In Progress"],
       })
     ).toBe(false);
+  });
+});
+
+describe("findPreferredStatusId", () => {
+  it("should return undefined specific transition is -1 (no transition)", () => {
+    expect(
+      findPreferredStatusId({
+        issueId: "10000",
+        issueStatusCategoryName: "To Do",
+        defaultPeferredStatuses: undefined,
+        specificPreferredStatuses: {
+          "To Do": "-1",
+          "In Progress": "-1",
+          Done: "-1",
+        },
+      })
+    ).toBeUndefined();
+  });
+
+  it("should return undefined when no default transition is configured, but specific configuration is to fall back to default", () => {
+    expect(
+      findPreferredStatusId({
+        issueId: "10000",
+        issueStatusCategoryName: "To Do",
+        defaultPeferredStatuses: undefined,
+        specificPreferredStatuses: {
+          "To Do": "-2",
+          "In Progress": "-2",
+          Done: "-2",
+        },
+      })
+    ).toBeUndefined();
+  });
+
+  it("should return the specific status id when configured", () => {
+    expect(
+      findPreferredStatusId({
+        issueId: "10000",
+        issueStatusCategoryName: "To Do",
+        defaultPeferredStatuses: undefined,
+        specificPreferredStatuses: {
+          "To Do": "10030",
+          "In Progress": "10031",
+          Done: "10032",
+        },
+      })
+    ).toBe("10030");
+  });
+
+  it("should return the default status id when configured", () => {
+    expect(
+      findPreferredStatusId({
+        issueId: "10000",
+        issueStatusCategoryName: "In Progress",
+        defaultPeferredStatuses: {
+          "To Do": "10030",
+          "In Progress": "10031",
+          Done: "10032",
+        },
+        specificPreferredStatuses: {
+          "To Do": "-2",
+          "In Progress": "-2",
+          Done: "-2",
+        },
+      })
+    ).toBe("10031");
+  });
+
+  it("should return the default status id when no specific configuration is available", () => {
+    expect(
+      findPreferredStatusId({
+        issueId: "10000",
+        issueStatusCategoryName: "Done",
+        defaultPeferredStatuses: {
+          "To Do": "10030",
+          "In Progress": "10031",
+          Done: "10032",
+        },
+        specificPreferredStatuses: undefined,
+      })
+    ).toBe("10032");
+  });
+});
+
+describe("getSprintStartAndEndDates", () => {
+  it("should return null values when no sprint is provided", () => {
+    expect(getSprintStartAndEndDates({ sprint: undefined })).toEqual({
+      startDate: null,
+      endDate: null,
+    });
+  });
+
+  it("should return startDate and completeDate from sprint for completed sprint", () => {
+    expect(getSprintStartAndEndDates({ sprint: closedSprint })).toEqual({
+      startDate: "1995-12-10",
+      endDate: "1995-12-24",
+    });
+  });
+
+  it("should return startDate and endDate from sprint for active sprint", () => {
+    expect(getSprintStartAndEndDates({ sprint: activeSprint })).toEqual({
+      startDate: "1995-12-10",
+      endDate: "1995-12-17",
+    });
+  });
+
+  it("should return null values for sprint with no dates", () => {
+    expect(
+      getSprintStartAndEndDates({ sprint: activeSprintWithoutDates })
+    ).toEqual({
+      startDate: null,
+      endDate: null,
+    });
   });
 });

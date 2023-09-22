@@ -217,23 +217,12 @@ export const areAllChildrenDone: AreAllChildrenDone = ({
  * (if no specific value is provided). If there is no configuration or the configuration indicates
  * that a transition shouldn't occur then undefined is returned.
  */
-export const findPreferredStatusId: FindPreferredStatusId = async ({
-  projectId,
+export const findPreferredStatusId: FindPreferredStatusId = ({
   issueId,
-  issueTypeId,
   issueStatusCategoryName,
+  defaultPeferredStatuses,
+  specificPreferredStatuses,
 }) => {
-  const storageKey = generateProjectIssueTypeStatusesStorageKey({
-    projectId,
-    issueTypeId,
-  });
-
-  // Get both the default and specific preferred statuses (as we may need both)...
-  const defaultPeferredStatuses: PreferredStatuses | undefined =
-    await storage.get(COMMON_PREFERRED_STATUSES_STORAGE_KEY);
-  const specificPreferredStatuses: PreferredStatuses | undefined =
-    await storage.get(storageKey);
-
   let preferredStatusId: string | undefined;
   if (specificPreferredStatuses !== undefined) {
     preferredStatusId = specificPreferredStatuses[issueStatusCategoryName];
@@ -253,7 +242,7 @@ export const findPreferredStatusId: FindPreferredStatusId = async ({
       console.log(
         `Will not update issue ${issueId} because the configured preference is NOT to modify status`
       );
-      return;
+      return undefined;
     }
   } else if (defaultPeferredStatuses !== undefined) {
     // Fallback to defaults...
@@ -283,11 +272,17 @@ export const transitionIssueWithComment: TransitionIssueWithComment = async ({
     })
   ).data.transitions;
 
-  const preferredStatusId = await findPreferredStatusId({
-    projectId: project.id,
+  const storageKey = generateProjectIssueTypeStatusesStorageKey({
+    projectId,
     issueTypeId: issuetype.id,
+  });
+  const preferredStatusId = findPreferredStatusId({
     issueId,
     issueStatusCategoryName,
+    specificPreferredStatuses: await storage.get(storageKey),
+    defaultPeferredStatuses: await storage.get(
+      COMMON_PREFERRED_STATUSES_STORAGE_KEY
+    ),
   });
 
   const targetTransition = availableTransitions.find((transition) => {

@@ -1,4 +1,4 @@
-import { ChangeLogItem } from "./types";
+import { ChangeLogItem, Sprint } from "./types";
 
 export const statusChangelogItems: ChangeLogItem[] = [
   {
@@ -58,3 +58,36 @@ export const higherLevelParentChangelogItems: ChangeLogItem[] = [
     toString: "BAM-3",
   },
 ];
+
+export const closedSprint: Sprint = {
+  id: 1,
+  name: "Sprint 1",
+  originBoardId: 1,
+  self: "self",
+  state: "closed",
+  completeDate: "1995-12-24T03:24:00",
+  endDate: "1995-12-17T03:24:00",
+  startDate: "1995-12-10T03:24:00",
+  goal: "Pass tests",
+};
+
+export const activeSprint: Sprint = {
+  id: 1,
+  name: "Sprint 1",
+  originBoardId: 1,
+  self: "self",
+  state: "active",
+  completeDate: "1995-12-24T03:24:00",
+  endDate: "1995-12-17T03:24:00",
+  startDate: "1995-12-10T03:24:00",
+  goal: "Pass tests",
+};
+
+export const activeSprintWithoutDates: Sprint = {
+  id: 1,
+  name: "Sprint 1",
+  originBoardId: 1,
+  self: "self",
+  state: "active",
+  goal: "Pass tests",
+};
