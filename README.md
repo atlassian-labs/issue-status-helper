@@ -35,7 +35,9 @@ Coming soon!
 
 ## Tests
 
-Automated tests soon!
+*Please note: There is not yet full automated test coverage, the remaining tests will be added over time!*
+
+You can use `npm test` from the root of the project to run the unit tests.
 
 ## Contributions
 
