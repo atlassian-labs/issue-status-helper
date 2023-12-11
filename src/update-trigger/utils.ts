@@ -42,7 +42,6 @@ import {
 } from "./types";
 import { storage } from "@forge/api";
 
-const parentLinkCustomField = "cf[10018]";
 const todoStatusCategoryName = "To Do";
 const inprogressStatusCategoryName = "In Progress";
 const doneStatusCategoryName = "Done";
@@ -125,9 +124,7 @@ export const generateProjectPreferencesStorageKey: GenerateProjectPreferencesSto
  */
 export const getChildIssueStatusCategories: GetChildIssueStatusCategories =
   async ({ parentKey, project }) => {
-    const jql = project.simplified
-      ? `parent=${parentKey}`
-      : `${parentLinkCustomField}=${parentKey}`;
+    const jql = `parent=${parentKey}`;
     const childIssues = (
       await searchWithJql({
         jql,

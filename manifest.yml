@@ -4,8 +4,6 @@ modules:
       function: trigger-main
       events:
         - avi:jira:updated:issue
-      filter:
-        ignoreSelf: true
 
   jira:adminPage:
     - key: issue-status-helper-admin-page
@@ -23,8 +21,8 @@ modules:
 resources:
   - key: config-main
     path: static/admin-page/build
-    # tunnel:
-    #   port: 3000
+    tunnel:
+      port: 3000
 
 permissions:
   scopes:
