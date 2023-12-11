@@ -28,6 +28,7 @@ import {
   GenerateProjectPreferencesStorageKey,
   GetChildIssueStatusCategories,
   GetCustomField,
+  GetMinMaxChildDates,
   GetParentChangeLogItem,
   GetPreferredDateFields,
   GetSprintChangeLogItem,
@@ -402,6 +403,7 @@ export const getSprintStartAndEndDates: GetSprintStartAndEndDates = ({
 export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAndEndDatesForSprintAssignment =
   async ({ issueIdOrKey, projectId, sprint, statusCategoryName }) => {
     if (sprint === undefined) {
+      console.log("No sprint assigned for issue", issueIdOrKey);
       return;
     }
     const dateFields = await getPreferredDateFields({});
@@ -414,6 +416,12 @@ export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAnd
     const { startDate, endDate } = getSprintStartAndEndDates({ sprint });
 
     if (statusCategoryName === "To Do") {
+      console.log(
+        "Updating start and end dates for issue",
+        issueIdOrKey,
+        startDate,
+        endDate
+      );
       await updateDatesWithComment({
         issueIdOrKey,
         projectId,
@@ -425,6 +433,7 @@ export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAnd
         comment: `Setting '${startFieldName}' and '${endFieldName}' as a result of assigning a sprint`,
       });
     } else if (statusCategoryName === "In Progress") {
+      console.log("Updating end dates for issue", issueIdOrKey, endDate);
       await updateDatesWithComment({
         issueIdOrKey,
         projectId,
@@ -713,6 +722,107 @@ export const updateParentStatus: UpdateParentStatus = async ({
 
     return;
   }
+
+  const dateFields = await getPreferredDateFields({});
+  if (dateFields !== undefined) {
+    const { startFieldId, endFieldId } = dateFields;
+
+    const minMaxChildDates = await getMinMaxChildDates({
+      parentKey: parent.id,
+      project,
+      startFieldId,
+      endFieldId,
+    });
+
+    const { earliestStart, latestEnd, earliestStartString, latestEndString } =
+      minMaxChildDates;
+
+    const parentStart: string = parent.fields[startFieldId];
+    const parentEnd: string = parent.fields[endFieldId];
+
+    console.log(
+      "Comparing parent start and end dates with min max of children",
+      parentStart,
+      parentEnd,
+      earliestStartString,
+      latestEndString,
+      earliestStart,
+      latestEnd
+    );
+
+    let newParentStart: string | undefined = undefined;
+    let newParentEnd: string | undefined = undefined;
+    if (earliestStart) {
+      if (parentStart) {
+        const parentStartDate = Date.parse(parentStart);
+        console.log("Parent start", parentStartDate);
+        if (earliestStart < parentStartDate) {
+          // TODO: Set parent start with earliest start
+          console.log("Found earlier start", earliestStartString);
+          newParentStart = earliestStartString;
+        }
+      } else {
+        console.log("No parent start");
+        newParentStart = earliestStartString;
+      }
+    } else {
+      console.log("Earliest start not defined", earliestStart);
+    }
+    if (latestEnd) {
+      if (parentEnd) {
+        const parentEndDate = Date.parse(parentEnd);
+        console.log("Parent end", parentEndDate);
+        if (latestEnd > parentEndDate) {
+          // TODO: Set parent end with latest end
+          console.log("Found later end", latestEndString);
+          newParentEnd = latestEndString;
+        }
+      } else {
+        console.log("No parent end");
+        newParentEnd = latestEndString;
+      }
+    } else {
+      console.log("Latest end not defined", latestEnd);
+    }
+
+    if (newParentStart && newParentEnd) {
+      console.log("Updating start AND end");
+      await updateDatesWithComment({
+        issueIdOrKey: parent.id,
+        projectId: project.id,
+        datesToSet: "BOTH",
+        startFieldId,
+        endFieldId,
+        startDate: newParentStart,
+        endDate: newParentEnd,
+        comment: "Added both start and end MIN MAX",
+      });
+    } else if (newParentStart) {
+      console.log("Updating start");
+      await updateDatesWithComment({
+        issueIdOrKey: parent.id,
+        projectId: project.id,
+        datesToSet: "START",
+        startFieldId,
+        endFieldId,
+        startDate: newParentStart,
+        endDate: null,
+        comment: "Added both start and end MIN MAX",
+      });
+    } else if (newParentEnd) {
+      console.log("Updating end");
+      await updateDatesWithComment({
+        issueIdOrKey: parent.id,
+        projectId: project.id,
+        datesToSet: "END",
+        startFieldId,
+        endFieldId,
+        startDate: null,
+        endDate: newParentEnd,
+        comment: "Added both start and end MIN MAX",
+      });
+    }
+  }
 };
 
 /**
@@ -736,4 +846,57 @@ export const addComment: AddComment = async ({
     return addCommentToIssue({ issueIdOrKey, comment });
   }
   return;
+};
+
+/**
+ * This function will return the earliest start date and latest end date from the supplied
+ * parent's children
+ */
+export const getMinMaxChildDates: GetMinMaxChildDates = async ({
+  parentKey,
+  project,
+  startFieldId,
+  endFieldId,
+}) => {
+  console.log(">>> Getting min max children of ", parentKey);
+  const jql = `parent=${parentKey}`;
+  const childIssues = (
+    await searchWithJql({
+      jql,
+    })
+  ).data;
+
+  let earliestStart: number | undefined = undefined;
+  let latestEnd: number | undefined = undefined;
+  let earliestStartString: string | undefined = undefined;
+  let latestEndString: string | undefined = undefined;
+
+  childIssues.issues.forEach((issue) => {
+    const currentStart = issue.fields[startFieldId];
+    const currentEnd = issue.fields[endFieldId];
+
+    console.log(">>> Min Max for ", issue.key, currentStart, currentEnd);
+
+    if (currentStart !== null) {
+      const currentStartDate = Date.parse(currentStart);
+      if (earliestStart === undefined || earliestStart > currentStartDate) {
+        earliestStart = currentStartDate;
+        earliestStartString = currentStart;
+      }
+    }
+    if (currentEnd !== null) {
+      const currentEndDate = Date.parse(currentEnd);
+      if (latestEnd === undefined || latestEnd < currentEndDate) {
+        latestEnd = currentEndDate;
+        latestEndString = currentEnd;
+      }
+    }
+  });
+
+  return {
+    earliestStart,
+    latestEnd,
+    earliestStartString,
+    latestEndString,
+  };
 };

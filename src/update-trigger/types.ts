@@ -294,3 +294,15 @@ export type AddComment = (args: {
   projectId: string;
   comment: string;
 }) => void;
+
+export type GetMinMaxChildDates = (args: {
+  parentKey: string;
+  project: Project;
+  startFieldId: string;
+  endFieldId: string;
+}) => Promise<{
+  earliestStart: number | undefined;
+  latestEnd?: number | undefined;
+  earliestStartString: string | undefined;
+  latestEndString: string | undefined;
+}>;
