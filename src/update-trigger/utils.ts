@@ -478,7 +478,7 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
         endFieldId,
         startDate: today,
         endDate,
-        datesToSet: "START",
+        datesToSet: "BOTH",
         comment: `Setting '${startFieldName}' as a result of moving issue from a 'To Do' status to an 'In Progress' status`,
       });
     } else if (
