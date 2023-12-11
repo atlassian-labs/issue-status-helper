@@ -470,7 +470,8 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
       targetStatusCategoryName === "In Progress"
     ) {
       // Moving from TODO -> IN PROGRESS
-      // When moving from TODO to IN PROGRESS we need to set the start date as TODAY
+      // When moving from TODO to IN PROGRESS we need to set the start date as TODAY, and we should set the end date as the end of
+      // the sprint (if a date is available)
       await updateDatesWithComment({
         issueIdOrKey,
         projectId,
