@@ -46,7 +46,5 @@ permissions:
 
 app:
   id: ari:cloud:ecosystem::app/c1686f11-2ee3-4fbc-94db-c43c01bdd608
-  features:
-    autoUserConsent: true
   licensing:
     enabled: false
