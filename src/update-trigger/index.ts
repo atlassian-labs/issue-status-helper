@@ -7,6 +7,7 @@ import {
   getParentChangeLogItem,
   getSprintChangeLogItem,
   isProjectSupported,
+  setParentMinMaxDates,
   shouldProcessIssueUpdate,
   updateIssueStartAndEndDatesForSprintAssignment,
   updateIssueStartAndEndDatesForTransition,
@@ -57,6 +58,15 @@ export async function run(event: UpdateEvent) {
         sprint: sprint && sprint[0],
         statusCategoryName: issue.fields.status.statusCategory.name,
       });
+
+      if (parentRef) {
+        const parent = (
+          await fetchIssue({
+            issueIdOrKey: parentRef.key,
+          })
+        ).data;
+        await setParentMinMaxDates({ parent });
+      }
     } else {
       console.log(
         `Ignoring sprint assignment for  ${issue.key}, because setting sprint dates is disabled for project`

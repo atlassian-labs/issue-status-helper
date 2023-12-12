@@ -779,6 +779,10 @@ export const getParentMinMaxDatesToSet: GetParentMinMaxDatesToSet = ({
 export const setParentMinMaxDates: SetParentMinMaxDates = async ({
   parent,
 }) => {
+  console.log(
+    `Updating start and end dates of ${parent.key} to match min/max of children`
+  );
+
   const dateFields = await getPreferredDateFields({});
   if (dateFields !== undefined) {
     const { startFieldId, endFieldId } = dateFields;
@@ -792,7 +796,7 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
     const { earliestStartString, latestEndString } = minMaxChildDates;
 
     await updateDatesWithComment({
-      issueIdOrKey: parent.id,
+      issueIdOrKey: parent.key,
       projectId: parent.fields.project.id,
       datesToSet: "BOTH",
       startFieldId,
