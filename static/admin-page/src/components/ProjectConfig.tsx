@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@forge/bridge";
 import Spinner from "@atlaskit/spinner";
-import { Inline, Stack } from "@atlaskit/primitives";
+import { Stack } from "@atlaskit/primitives";
 import { ProjectPreferences } from "../common/types";
 import Toggle from "@atlaskit/toggle";
+import { Label } from "@atlaskit/form";
 
 type ProjectConfigProps = {
   storageKey: string;
@@ -36,6 +37,7 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
         setProjectPreferences({
           commentsEnabled: true,
           sprintDatesEnabled: false,
+          childMinMaxDatesEnabled: false,
         });
       } else {
         setProjectPreferences(loadedProjectPreferences);
@@ -60,14 +62,18 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
     });
   };
 
-  const { commentsEnabled = true, sprintDatesEnabled = false } =
-    projectPreferences;
+  const {
+    commentsEnabled = true,
+    sprintDatesEnabled = false,
+    childMinMaxDatesEnabled = false,
+  } = projectPreferences;
 
   return (
-    <Stack space="space.100">
-      <Inline space="space.100" alignBlock="center">
-        <span>Comment on issues</span>
+    <Stack space="space.150">
+      <Stack space="space.025">
+        <Label htmlFor="commentsEnabledToggle">Comment on issues</Label>
         <Toggle
+          id="commentsEnabledToggle"
           isChecked={commentsEnabled}
           onChange={() =>
             onToggle({
@@ -78,10 +84,13 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
           label={`Enable comments`}
           name="comments"
         />
-      </Inline>
-      <Inline space="space.100" alignBlock="center">
-        <span>Assign dates from sprints</span>
+      </Stack>
+      <Stack space="space.025">
+        <Label htmlFor="sprintDatesEnabledToggle">
+          Assign dates from sprints
+        </Label>
         <Toggle
+          id="sprintDatesEnabledToggle"
           isChecked={sprintDatesEnabled}
           onChange={() =>
             onToggle({
@@ -92,7 +101,25 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
           label={`Enable sprint dates`}
           name="sprintDates"
         />
-      </Inline>
+      </Stack>
+
+      <Stack space="space.025">
+        <Label htmlFor="childMinMaxDatesEnabledToggle">
+          Parent issues inherit earliest start date and latest end date from
+          children
+        </Label>
+        <Toggle
+          isChecked={childMinMaxDatesEnabled}
+          onChange={() =>
+            onToggle({
+              key: "childMinMaxDatesEnabled",
+              enabled: !childMinMaxDatesEnabled,
+            })
+          }
+          label={`Enable start and end date inheritance`}
+          name="dateInheritance"
+        />
+      </Stack>
     </Stack>
   );
 };
