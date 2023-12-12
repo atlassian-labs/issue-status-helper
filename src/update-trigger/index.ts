@@ -104,17 +104,19 @@ export async function run(event: UpdateEvent) {
   if (parentChangeLogItem) {
     const { to, toString, from, fromString } = parentChangeLogItem;
     if (from || fromString) {
-      console.log(`Updating previous parent: ${from || fromString}`);
+      const parentId = (from as string) || (fromString as string);
+      console.log(`Updating previous parent: ${parentId}`);
       await updateParentStatus({
-        parentId: (from as string) || (fromString as string),
+        parentId,
         project,
         issue,
       });
     }
     if (to || toString) {
-      console.log(`Updating new parent: ${to || toString}`);
+      const parentId = (to as string) || (toString as string);
+      console.log(`Updating new parent: ${parentId}`);
       await updateParentStatus({
-        parentId: (to as string) || (toString as string),
+        parentId,
         project,
         issue,
       });

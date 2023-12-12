@@ -278,6 +278,8 @@ export type GetPreferredDateFields = (args: {}) => Promise<
     }
 >;
 
+export type DatesToSet = "BOTH" | "START" | "END";
+
 export type UpdateDatesWithComment = (args: {
   issueIdOrKey: string;
   projectId: string;
@@ -285,7 +287,7 @@ export type UpdateDatesWithComment = (args: {
   endFieldId: string;
   startDate: string | null;
   endDate: string | null;
-  datesToSet: "BOTH" | "START" | "END";
+  datesToSet: DatesToSet;
   comment: string;
 }) => void;
 
@@ -297,12 +299,16 @@ export type AddComment = (args: {
 
 export type GetMinMaxChildDates = (args: {
   parentKey: string;
-  project: Project;
   startFieldId: string;
   endFieldId: string;
 }) => Promise<{
-  earliestStart: number | undefined;
-  latestEnd?: number | undefined;
   earliestStartString: string | undefined;
   latestEndString: string | undefined;
 }>;
+
+export type SetParentMinMaxDates = (args: { parent: Issue }) => void;
+
+export type GetParentMinMaxDatesToSet = (args: {
+  earliestStart: number | undefined;
+  latestEnd: number | undefined;
+}) => DatesToSet | undefined;
