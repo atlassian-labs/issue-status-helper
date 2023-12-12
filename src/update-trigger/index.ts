@@ -5,10 +5,12 @@ import { UpdateEvent } from "./types";
 import {
   generateProjectPreferencesStorageKey,
   getParentChangeLogItem,
+  getPreferredDateFields,
   getSprintChangeLogItem,
   isProjectSupported,
   setParentMinMaxDates,
   shouldProcessIssueUpdate,
+  startOrEndDateFieldHasUpdated,
   updateIssueStartAndEndDatesForSprintAssignment,
   updateIssueStartAndEndDatesForTransition,
   updateParentStatus,
@@ -21,10 +23,30 @@ export async function run(event: UpdateEvent) {
     JSON.stringify(changelogItems)
   );
 
-  // Iterate over the items in the change log to verify whether or not a change of status
-  // was part of this issue update event. We only want to perform any action if the status
-  // has changed...
+  const preferredDateFields = await getPreferredDateFields({});
+
+  if (startOrEndDateFieldHasUpdated({ changelogItems, preferredDateFields })) {
+    console.log(
+      `Issue ${event.issue.key} was updated with start and/or end date changes`
+    );
+    const issueIdOrKey = event.issue.id;
+    const issue = (await fetchIssue({ issueIdOrKey })).data;
+    const { fields: issueFields } = issue;
+    const { parent: parentRef } = issueFields;
+    if (parentRef) {
+      const parent = (
+        await fetchIssue({
+          issueIdOrKey: parentRef.key,
+        })
+      ).data;
+      await setParentMinMaxDates({ parent, preferredDateFields });
+    }
+  }
+
   if (!shouldProcessIssueUpdate({ changelogItems })) {
+    // Iterate over the items in the change log to verify whether or not a change of status
+    // was part of this issue update event. We only want to perform any action if the status
+    // has changed...
     console.log(
       `Issue ${event.issue.key} was updated but neither state change nor re-parenting occurred`
     );
@@ -57,15 +79,17 @@ export async function run(event: UpdateEvent) {
         projectId: project.id,
         sprint: sprint && sprint[0],
         statusCategoryName: issue.fields.status.statusCategory.name,
+        preferredDateFields,
       });
 
+      // If the issue has a parent then update the parent dates...
       if (parentRef) {
         const parent = (
           await fetchIssue({
             issueIdOrKey: parentRef.key,
           })
         ).data;
-        await setParentMinMaxDates({ parent });
+        await setParentMinMaxDates({ parent, preferredDateFields });
       }
     } else {
       console.log(
@@ -120,6 +144,7 @@ export async function run(event: UpdateEvent) {
         parentId,
         project,
         issue,
+        preferredDateFields,
       });
     }
     if (to || toString) {
@@ -129,12 +154,18 @@ export async function run(event: UpdateEvent) {
         parentId,
         project,
         issue,
+        preferredDateFields,
       });
     }
     return;
   } else if (statusTransition && parentRef) {
     console.log(`Updating status of current parent: ${parentRef.key}`);
-    await updateParentStatus({ parentId: parentRef.id, project, issue });
+    await updateParentStatus({
+      parentId: parentRef.id,
+      project,
+      issue,
+      preferredDateFields,
+    });
     return;
   }
 }

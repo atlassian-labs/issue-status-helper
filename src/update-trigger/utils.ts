@@ -5,7 +5,6 @@ import {
 } from "../../static/admin-page/src/common/constants";
 import {
   PreferredDateFields,
-  PreferredStatuses,
   ProjectPreferences,
   SupportedProjects,
 } from "../../static/admin-page/src/common/types";
@@ -18,7 +17,12 @@ import {
   transitionIssue,
   updateIssueCustomField,
 } from "./restApi";
-import { GetParentMinMaxDatesToSet, SetParentMinMaxDates } from "./types";
+import {
+  GetParentMinMaxDatesToSet,
+  DateFields,
+  SetParentMinMaxDates,
+} from "./types";
+import { StartOrEndDateFieldHasUpdated } from "./types";
 import {
   AddComment,
   AreAllChildrenDone,
@@ -52,6 +56,23 @@ const doneStatusCategoryName = "Done";
 const teamManagedParentField = "IssueParentAssociation";
 const companyManagedEpicLinkField = "Epic Link";
 const higherLevelParentLinkField = "Parent Link";
+
+export const startOrEndDateFieldHasUpdated: StartOrEndDateFieldHasUpdated = ({
+  changelogItems,
+  preferredDateFields,
+}) => {
+  const shouldProcess = changelogItems.some((change) => {
+    const { fieldId } = change;
+    if (preferredDateFields) {
+      const { startFieldId, endFieldId } = preferredDateFields;
+      if (fieldId === startFieldId || fieldId === endFieldId) {
+        return true;
+      }
+    }
+    return false;
+  });
+  return shouldProcess;
+};
 
 /**
  * Checks to see whether or not the issue update should be processed.
@@ -402,18 +423,24 @@ export const getSprintStartAndEndDates: GetSprintStartAndEndDates = ({
  *
  */
 export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAndEndDatesForSprintAssignment =
-  async ({ issueIdOrKey, projectId, sprint, statusCategoryName }) => {
+  async ({
+    issueIdOrKey,
+    projectId,
+    sprint,
+    statusCategoryName,
+    preferredDateFields,
+  }) => {
     if (sprint === undefined) {
       console.log("No sprint assigned for issue", issueIdOrKey);
       return;
     }
-    const dateFields = await getPreferredDateFields({});
-    if (dateFields === undefined) {
+
+    if (preferredDateFields === undefined) {
       return;
     }
 
     const { startFieldId, startFieldName, endFieldId, endFieldName } =
-      dateFields;
+      preferredDateFields;
     const { startDate, endDate } = getSprintStartAndEndDates({ sprint });
 
     if (statusCategoryName === "To Do") {
@@ -630,6 +657,7 @@ export const updateParentStatus: UpdateParentStatus = async ({
   parentId,
   project,
   issue,
+  preferredDateFields,
 }) => {
   const parent = (
     await fetchIssue({
@@ -659,7 +687,7 @@ export const updateParentStatus: UpdateParentStatus = async ({
     projectPreferences !== undefined &&
     projectPreferences.childMinMaxDatesEnabled === true
   ) {
-    await setParentMinMaxDates({ parent });
+    await setParentMinMaxDates({ parent, preferredDateFields });
   }
 
   // Get all of the status categories of the children of the parent (i.e. the trigger issue and
@@ -778,14 +806,28 @@ export const getParentMinMaxDatesToSet: GetParentMinMaxDatesToSet = ({
 
 export const setParentMinMaxDates: SetParentMinMaxDates = async ({
   parent,
+  preferredDateFields,
 }) => {
   console.log(
     `Updating start and end dates of ${parent.key} to match min/max of children`
   );
+  const projectPreferences: ProjectPreferences | undefined = await storage.get(
+    generateProjectPreferencesStorageKey({
+      projectId: parent.fields.project.id,
+    })
+  );
+  if (
+    projectPreferences === undefined ||
+    !projectPreferences.childMinMaxDatesEnabled
+  ) {
+    console.log(
+      `Will not set start and end dates for ${parent.key} because child inheritance is not enabled for ${parent.fields.project.name}`
+    );
+    return;
+  }
 
-  const dateFields = await getPreferredDateFields({});
-  if (dateFields !== undefined) {
-    const { startFieldId, endFieldId } = dateFields;
+  if (preferredDateFields !== undefined) {
+    const { startFieldId, endFieldId } = preferredDateFields;
 
     const minMaxChildDates = await getMinMaxChildDates({
       parentKey: parent.key,

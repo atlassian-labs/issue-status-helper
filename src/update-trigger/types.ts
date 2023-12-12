@@ -252,6 +252,7 @@ export type UpdateParentStatus = (args: {
   parentId: string;
   project: Project;
   issue: Issue;
+  preferredDateFields?: DateFields;
 }) => void;
 
 export type UpdateIssueStartAndEndDatesForSprintAssignment = (args: {
@@ -259,6 +260,7 @@ export type UpdateIssueStartAndEndDatesForSprintAssignment = (args: {
   projectId: string;
   sprint: Sprint | undefined;
   statusCategoryName: IssueStatusCategoryName;
+  preferredDateFields?: DateFields;
 }) => void;
 
 export type GetSprintStartAndEndDates = (args: {
@@ -268,14 +270,15 @@ export type GetSprintStartAndEndDates = (args: {
   endDate: string | null;
 };
 
+export type DateFields = {
+  startFieldId: string;
+  endFieldId: string;
+  startFieldName: string;
+  endFieldName: string;
+};
+
 export type GetPreferredDateFields = (args: {}) => Promise<
-  | undefined
-  | {
-      startFieldId: string;
-      endFieldId: string;
-      startFieldName: string;
-      endFieldName: string;
-    }
+  DateFields | undefined
 >;
 
 export type DatesToSet = "BOTH" | "START" | "END";
@@ -306,9 +309,17 @@ export type GetMinMaxChildDates = (args: {
   latestEndString: string | undefined;
 }>;
 
-export type SetParentMinMaxDates = (args: { parent: Issue }) => void;
+export type SetParentMinMaxDates = (args: {
+  parent: Issue;
+  preferredDateFields?: DateFields;
+}) => void;
 
 export type GetParentMinMaxDatesToSet = (args: {
   earliestStart: number | undefined;
   latestEnd: number | undefined;
 }) => DatesToSet | undefined;
+
+export type StartOrEndDateFieldHasUpdated = (args: {
+  changelogItems: ChangeLogItem[];
+  preferredDateFields?: DateFields;
+}) => boolean;
