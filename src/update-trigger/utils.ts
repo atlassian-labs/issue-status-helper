@@ -845,7 +845,8 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
       endFieldId,
       startDate: earliestStartString || null,
       endDate: latestEndString || null,
-      comment: "Added both start and end MIN MAX", // TODO: Needs comment
+      comment:
+        "Updated start and end dates to span the date range of child issues",
     });
   }
 };
