@@ -47,9 +47,9 @@ export async function run(event: UpdateEvent) {
     // Iterate over the items in the change log to verify whether or not a change of status
     // was part of this issue update event. We only want to perform any action if the status
     // has changed...
-    console.log(
-      `Issue ${event.issue.key} was updated but neither state change nor re-parenting occurred`
-    );
+    // console.log(
+    //   `Issue ${event.issue.key} was updated but neither state change nor re-parenting occurred`
+    // );
     return;
   }
 
@@ -129,6 +129,7 @@ export async function run(event: UpdateEvent) {
         issueIdOrKey,
         projectId: project.id,
         sprint: sprint && sprint[0],
+        preferredDateFields,
       });
     }
   } else {
@@ -139,7 +140,9 @@ export async function run(event: UpdateEvent) {
     const { to, toString, from, fromString } = parentChangeLogItem;
     if (from || fromString) {
       const parentId = (from as string) || (fromString as string);
-      console.log(`Updating previous parent: ${parentId}`);
+      console.log(
+        `Updating previous parent of ${issue.key} (which is ${parentId})`
+      );
       await updateParentStatus({
         parentId,
         project,
@@ -149,7 +152,7 @@ export async function run(event: UpdateEvent) {
     }
     if (to || toString) {
       const parentId = (to as string) || (toString as string);
-      console.log(`Updating new parent: ${parentId}`);
+      console.log(`Updating new parent of ${issue.key} (which is ${parentId})`);
       await updateParentStatus({
         parentId,
         project,
@@ -159,7 +162,9 @@ export async function run(event: UpdateEvent) {
     }
     return;
   } else if (statusTransition && parentRef) {
-    console.log(`Updating status of current parent: ${parentRef.key}`);
+    console.log(
+      `Updating status of current parent of ${issue.key} (which is ${parentRef.key})`
+    );
     await updateParentStatus({
       parentId: parentRef.id,
       project,

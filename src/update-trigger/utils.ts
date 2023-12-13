@@ -19,8 +19,9 @@ import {
 } from "./restApi";
 import {
   GetParentMinMaxDatesToSet,
-  DateFields,
   SetParentMinMaxDates,
+  GetParentMinMaxDateValues,
+  GetStartAndEndDatesToSet,
 } from "./types";
 import { StartOrEndDateFieldHasUpdated } from "./types";
 import {
@@ -478,6 +479,43 @@ export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAnd
     }
   };
 
+const getStartAndEndDatesToSet: GetStartAndEndDatesToSet = async ({
+  issueIdOrKey,
+  projectId,
+  preferredDateFields,
+  sprint,
+}) => {
+  const minMaxDates = await getParentMinMaxDateValues({
+    issueIdOrKey,
+    projectId,
+    preferredDateFields,
+  });
+  if (minMaxDates !== undefined) {
+    console.log(
+      `Using min/max dates to set ${issueIdOrKey} on transition: ${minMaxDates.earliestStartString} -> ${minMaxDates.latestEndString}`
+    );
+    return {
+      startDate: minMaxDates.earliestStartString,
+      endDate: minMaxDates.latestEndString,
+    };
+  } else if (sprint !== undefined) {
+    const sprintDates = getSprintStartAndEndDates({ sprint });
+    if (sprintDates !== undefined) {
+      console.log(
+        `Using sprint dates to set ${issueIdOrKey} on transition: ${sprintDates.startDate} -> ${sprintDates.endDate}`
+      );
+      return sprintDates;
+    }
+  }
+  console.log(
+    `Neither min/max nor sprint dates available to set ${issueIdOrKey} on transition`
+  );
+  return {
+    startDate: null,
+    endDate: null,
+  };
+};
+
 /**
  * This function reviews the supplied current and target status category names to determine whether or
  * not a start and/or end date field should be updated. The date fields to update are retrieved from
@@ -491,17 +529,29 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
     issueIdOrKey,
     projectId,
     sprint,
+    preferredDateFields,
   }) => {
     const today = new Date().toISOString().split("T")[0];
 
-    const dateFields = await getPreferredDateFields({});
-    if (dateFields === undefined) {
+    if (preferredDateFields === undefined) {
       return;
     }
 
     const { startFieldId, startFieldName, endFieldId, endFieldName } =
-      dateFields;
-    const { startDate, endDate } = getSprintStartAndEndDates({ sprint });
+      preferredDateFields;
+    // const { startDate, endDate } = getSprintStartAndEndDates({ sprint });
+
+    // TODO: The problem here is that when no sprint is set (i.e. for a parent) the dates are cleared
+    // We need to set sprint when appropriate, but when no sprint, fall back to min/max if supported
+
+    // What is precedence here?
+    // No children, use sprint, no sprint
+    const { startDate, endDate } = await getStartAndEndDatesToSet({
+      issueIdOrKey,
+      projectId,
+      preferredDateFields,
+      sprint,
+    });
 
     if (
       currentStatusCategoryName === "To Do" &&
@@ -701,11 +751,10 @@ export const updateParentStatus: UpdateParentStatus = async ({
     await updateIssueStartAndEndDatesForTransition({
       currentStatusCategoryName: parentStatusCategoryName,
       targetStatusCategoryName: "Done",
-      issueIdOrKey: parentId,
+      issueIdOrKey: parent.key,
       projectId: project.id,
+      preferredDateFields,
     });
-
-    await setParentMinMaxDates({ parent, preferredDateFields });
 
     return;
   }
@@ -722,11 +771,10 @@ export const updateParentStatus: UpdateParentStatus = async ({
     await updateIssueStartAndEndDatesForTransition({
       currentStatusCategoryName: parentStatusCategoryName,
       targetStatusCategoryName: "To Do",
-      issueIdOrKey: parentId,
+      issueIdOrKey: parent.key,
       projectId: project.id,
+      preferredDateFields,
     });
-
-    await setParentMinMaxDates({ parent, preferredDateFields });
 
     return;
   }
@@ -751,11 +799,10 @@ export const updateParentStatus: UpdateParentStatus = async ({
     await updateIssueStartAndEndDatesForTransition({
       currentStatusCategoryName: parentStatusCategoryName,
       targetStatusCategoryName: "In Progress",
-      issueIdOrKey: parentId,
+      issueIdOrKey: parent.key,
       projectId: project.id,
+      preferredDateFields,
     });
-
-    await setParentMinMaxDates({ parent, preferredDateFields });
 
     return;
   }
@@ -784,7 +831,6 @@ export const addComment: AddComment = async ({
   return;
 };
 
-// TODO: Evaluate if this is needed (perhaps we should always set BOTH dates - even when clearing)
 // This function determines what dates to set on the parent issue...
 export const getParentMinMaxDatesToSet: GetParentMinMaxDatesToSet = ({
   earliestStart,
@@ -800,16 +846,14 @@ export const getParentMinMaxDatesToSet: GetParentMinMaxDatesToSet = ({
   return;
 };
 
-export const setParentMinMaxDates: SetParentMinMaxDates = async ({
-  parent,
+export const getParentMinMaxDateValues: GetParentMinMaxDateValues = async ({
+  issueIdOrKey,
+  projectId,
   preferredDateFields,
 }) => {
-  console.log(
-    `Updating start and end dates of ${parent.key} to match min/max of children`
-  );
   const projectPreferences: ProjectPreferences | undefined = await storage.get(
     generateProjectPreferencesStorageKey({
-      projectId: parent.fields.project.id,
+      projectId,
     })
   );
   if (
@@ -817,20 +861,32 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
     !projectPreferences.childMinMaxDatesEnabled
   ) {
     console.log(
-      `Will not set start and end dates for ${parent.key} because child inheritance is not enabled for ${parent.fields.project.name}`
+      `Will not set min/max dates for ${issueIdOrKey} because child inheritance is not enabled for ${projectId}`
     );
     return;
   }
-
   if (preferredDateFields !== undefined) {
     const { startFieldId, endFieldId } = preferredDateFields;
 
     const minMaxChildDates = await getMinMaxChildDates({
-      parentKey: parent.key,
+      parentKey: issueIdOrKey,
       startFieldId,
       endFieldId,
     });
+    return minMaxChildDates;
+  }
+};
 
+export const setParentMinMaxDates: SetParentMinMaxDates = async ({
+  parent,
+  preferredDateFields,
+}) => {
+  const minMaxChildDates = await getParentMinMaxDateValues({
+    projectId: parent.fields.project.id,
+    issueIdOrKey: parent.key,
+    preferredDateFields,
+  });
+  if (preferredDateFields !== undefined && minMaxChildDates !== undefined) {
     const { earliestStartString, latestEndString } = minMaxChildDates;
     if (earliestStartString === undefined && latestEndString === undefined) {
       // When there are no dates, don't make any updates!
@@ -839,6 +895,12 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
       );
       return;
     }
+
+    console.log(
+      `Updating start and end dates of ${parent.key} to match min/max of children: ${earliestStartString} -> ${latestEndString}`
+    );
+
+    const { startFieldId, endFieldId } = preferredDateFields;
 
     await updateDatesWithComment({
       issueIdOrKey: parent.key,
@@ -870,6 +932,10 @@ export const getMinMaxChildDates: GetMinMaxChildDates = async ({
     })
   ).data;
 
+  if (childIssues.issues.length === 0) {
+    return;
+  }
+
   let earliestStart: number | undefined = undefined;
   let latestEnd: number | undefined = undefined;
   let earliestStartString: string | undefined = undefined;
@@ -896,7 +962,7 @@ export const getMinMaxChildDates: GetMinMaxChildDates = async ({
   });
 
   return {
-    earliestStartString,
-    latestEndString,
+    earliestStartString: earliestStartString || null,
+    latestEndString: latestEndString || null,
   };
 };
