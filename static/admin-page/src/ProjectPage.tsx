@@ -22,6 +22,8 @@ function ProjectPage(props: ProjectPageProps) {
     },
   } = props;
 
+  console.log(">> Props", props);
+
   const [supportedProjects, setSupportedProjects] = useState<
     SupportedProjects | undefined
   >(undefined);

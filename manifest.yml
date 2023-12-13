@@ -18,6 +18,9 @@ modules:
       resolver:
         function: resolver
       title: Issue Status Helper Config
+      displayConditions:
+        projectType: software
+        isProjectAdmin: true
 
   function:
     - key: resolver

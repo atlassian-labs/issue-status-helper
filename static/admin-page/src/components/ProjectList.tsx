@@ -13,9 +13,7 @@ import Spinner from "@atlaskit/spinner";
 import Pagination from "@atlaskit/pagination";
 import { ProjectDetails } from "./ProjectDetails";
 
-type ProjectListProps = {};
-
-export const ProjectList = (props: ProjectListProps) => {
+export const ProjectList = () => {
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [projectSearchResults, setProjectSearchResults] = useState<
