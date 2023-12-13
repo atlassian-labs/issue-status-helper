@@ -69,7 +69,6 @@ export const SelectStatus = (props: SelectStatusProps) => {
   }
 
   const onChange = (selectedOption: StatusOption) => {
-    console.log("Selected", selectedOption);
     onStatusSelected({
       statusId: selectedOption.value,
       category: categoryName,

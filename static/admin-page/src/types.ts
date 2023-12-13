@@ -1,6 +1,20 @@
-import { IssueStatus, IssueStatusCategoryName, Project } from "./common/types";
+import { IssueStatus, IssueStatusCategoryName } from "./common/types";
 
 export type { Project } from "./common/types";
+
+export type FullContext = {
+  moduleKey: string;
+  extension?: ExtensionContext;
+};
+
+export type ExtensionContext = {
+  type: string;
+  project: {
+    id: string;
+    key: string;
+    type: string;
+  };
+};
 
 export type ProjectIssueType = {
   id: string;

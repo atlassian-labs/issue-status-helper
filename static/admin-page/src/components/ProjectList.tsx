@@ -13,9 +13,7 @@ import Spinner from "@atlaskit/spinner";
 import Pagination from "@atlaskit/pagination";
 import { ProjectDetails } from "./ProjectDetails";
 
-type ProjectListProps = {};
-
-export const ProjectList = (props: ProjectListProps) => {
+export const ProjectList = () => {
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [projectSearchResults, setProjectSearchResults] = useState<
@@ -52,12 +50,10 @@ export const ProjectList = (props: ProjectListProps) => {
       // TODO: Need to create properly typed resolvers
       // @ts-ignore
       const storedSupportedProjects: SupportedProjects = response;
-      console.log(">>>> Loaded supported projects", storedSupportedProjects);
 
       // @ts-ignore - Need to trust the data
       if (storedSupportedProjects === undefined) {
         // No data has been stored yet, no action
-        console.log(">>>> Supported projects not found");
       } else {
         setSupportedProjects(storedSupportedProjects);
       }

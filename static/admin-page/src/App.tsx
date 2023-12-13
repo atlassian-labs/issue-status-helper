@@ -1,69 +1,37 @@
-import SectionMessage from "@atlaskit/section-message";
-import { Box, Stack, xcss } from "@atlaskit/primitives";
-import Heading from "@atlaskit/heading";
+import { useEffect, useState } from "react";
 import { view } from "@forge/bridge";
-import { ProjectList } from "./components/ProjectList";
-import { CommonStatuses } from "./components/CommonStatuses";
-import { StartAndEndFields } from "./components/StartAndEndFields";
-import { CommentsSettings } from "./components/CommentsSettings";
-import Tabs, { TabList, Tab, TabPanel } from "@atlaskit/tabs";
+import { FullContext } from "./types";
+import AdminPage from "./AdminPage";
+import ProjectPage from "./ProjectPage";
 
-const boxStyles = xcss({
-  flexGrow: "1",
-});
+function ModuleRouter() {
+  const [context, setContext] = useState<FullContext | undefined>();
 
-function App() {
   view.theme.enable();
-  return (
-    <Stack space="space.250">
-      <SectionMessage title="Automatic issue status hierarchy transitions">
-        <p>
-          Select the projects that you want to enable for automatic issue
-          transitions. When enabled the parent of an issue will automatically be
-          updated to assigned status for each category. For example if all child
-          issues are "DONE" then the parent issue will automatically be set to
-          the configured status for the "DONE" status category.
-        </p>
-        <p>
-          When an issue transitions between status categories you can enable
-          setting start and end date fields to log when the change occurred.
-        </p>
-      </SectionMessage>
-      <Tabs id="tab">
-        <TabList>
-          <Tab>Project Settings</Tab>
-          <Tab>Global Settings</Tab>
-          {/* <Tab>Comments Settings</Tab> */}
-        </TabList>
-        <TabPanel>
-          <Box padding="space.250" xcss={boxStyles}>
-            <Stack space="space.200">
-              <Heading level="h700">Projects</Heading>
-              <ProjectList />
-            </Stack>
-          </Box>
-        </TabPanel>
-        <TabPanel>
-          <Box padding="space.250">
-            <Stack space="space.200">
-              <Heading level="h700">Status configurations</Heading>
-              <CommonStatuses />
-              <Heading level="h700">Date field configurations</Heading>
-              <StartAndEndFields />
-            </Stack>
-          </Box>
-        </TabPanel>
-        {/* <TabPanel>
-          <Box padding="space.250">
-            <Stack space="space.200">
-              <Heading level="h700">Comments</Heading>
-              <CommentsSettings />
-            </Stack>
-          </Box>
-        </TabPanel> */}
-      </Tabs>
-    </Stack>
-  );
+  useEffect(() => {
+    // Use the "view" from Forge Bridge to get the context where this React app is running
+    // @ts-ignore
+    view.getContext().then(setContext);
+  }, []);
+
+  if (context === undefined) {
+    return <div>Detecting context...</div>;
+  }
+
+  // Detect the module which calling this React app,
+  // and render the content for that
+  switch (context.moduleKey) {
+    case "issue-status-helper-admin-page":
+      return <AdminPage />;
+    case "issue-status-helper-project-page":
+      const extensionContext = context.extension;
+      if (extensionContext) {
+        return <ProjectPage extensionContext={extensionContext} />;
+      }
+      return <div>Extension Context Not Found</div>;
+    default:
+      return <div>Cannot Detect Context</div>;
+  }
 }
 
-export default App;
+export default ModuleRouter;

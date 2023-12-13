@@ -49,7 +49,6 @@ export const SelectDateField = (props: SelectDateFieldProps) => {
   }
 
   const onChange = (selectedOption: StatusOption) => {
-    console.log("Selected", selectedOption);
     onDateFieldSelected({
       dateFieldId: selectedOption.value,
       dateFieldType,

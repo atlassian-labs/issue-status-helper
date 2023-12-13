@@ -12,6 +12,16 @@ modules:
         function: resolver
       title: Issue Status Helper Config
 
+  jira:projectPage:
+    - key: issue-status-helper-project-page
+      resource: config-main
+      resolver:
+        function: resolver
+      title: Issue Status Helper Config
+      displayConditions:
+        projectType: software
+        isProjectAdmin: true
+
   function:
     - key: resolver
       handler: index.handler
