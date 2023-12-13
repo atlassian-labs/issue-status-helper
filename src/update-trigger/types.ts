@@ -315,7 +315,6 @@ export type GetMinMaxChildDates = (args: {
 }) => Promise<MinMaxDates | undefined>;
 
 export type GetParentMinMaxDateValues = (args: {
-  // parent: Issue;
   issueIdOrKey: string;
   projectId: string;
   preferredDateFields?: DateFields;

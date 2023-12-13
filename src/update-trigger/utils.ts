@@ -539,13 +539,7 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
 
     const { startFieldId, startFieldName, endFieldId, endFieldName } =
       preferredDateFields;
-    // const { startDate, endDate } = getSprintStartAndEndDates({ sprint });
 
-    // TODO: The problem here is that when no sprint is set (i.e. for a parent) the dates are cleared
-    // We need to set sprint when appropriate, but when no sprint, fall back to min/max if supported
-
-    // What is precedence here?
-    // No children, use sprint, no sprint
     const { startDate, endDate } = await getStartAndEndDatesToSet({
       issueIdOrKey,
       projectId,

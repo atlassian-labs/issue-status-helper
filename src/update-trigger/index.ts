@@ -47,9 +47,6 @@ export async function run(event: UpdateEvent) {
     // Iterate over the items in the change log to verify whether or not a change of status
     // was part of this issue update event. We only want to perform any action if the status
     // has changed...
-    // console.log(
-    //   `Issue ${event.issue.key} was updated but neither state change nor re-parenting occurred`
-    // );
     return;
   }
 
