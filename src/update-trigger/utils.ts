@@ -436,6 +436,7 @@ export const updateIssueStartAndEndDatesForSprintAssignment: UpdateIssueStartAnd
     }
 
     if (preferredDateFields === undefined) {
+      console.log("No preferred date fields configured");
       return;
     }
 
@@ -678,18 +679,6 @@ export const updateParentStatus: UpdateParentStatus = async ({
     return;
   }
 
-  // Get the project preferences for parent issue to see whether or not min/max start and end
-  // dates should be set...
-  const projectPreferences: ProjectPreferences | undefined = await storage.get(
-    generateProjectPreferencesStorageKey({ projectId: parentProjectId })
-  );
-  if (
-    projectPreferences !== undefined &&
-    projectPreferences.childMinMaxDatesEnabled === true
-  ) {
-    await setParentMinMaxDates({ parent, preferredDateFields });
-  }
-
   // Get all of the status categories of the children of the parent (i.e. the trigger issue and
   // its siblings) this will help us determine what changes need to be made to the status of the
   // parent issue...
@@ -716,6 +705,8 @@ export const updateParentStatus: UpdateParentStatus = async ({
       projectId: project.id,
     });
 
+    await setParentMinMaxDates({ parent, preferredDateFields });
+
     return;
   }
 
@@ -734,6 +725,9 @@ export const updateParentStatus: UpdateParentStatus = async ({
       issueIdOrKey: parentId,
       projectId: project.id,
     });
+
+    await setParentMinMaxDates({ parent, preferredDateFields });
+
     return;
   }
 
@@ -760,6 +754,8 @@ export const updateParentStatus: UpdateParentStatus = async ({
       issueIdOrKey: parentId,
       projectId: project.id,
     });
+
+    await setParentMinMaxDates({ parent, preferredDateFields });
 
     return;
   }
@@ -836,6 +832,13 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
     });
 
     const { earliestStartString, latestEndString } = minMaxChildDates;
+    if (earliestStartString === undefined && latestEndString === undefined) {
+      // When there are no dates, don't make any updates!
+      console.log(
+        `Neither min nor max date found for children of ${parent.key}`
+      );
+      return;
+    }
 
     await updateDatesWithComment({
       issueIdOrKey: parent.key,

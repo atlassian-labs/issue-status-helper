@@ -75,7 +75,7 @@ export async function run(event: UpdateEvent) {
     ) {
       console.log(`Handling sprint assignment for issue ${issue.key}`);
       await updateIssueStartAndEndDatesForSprintAssignment({
-        issueIdOrKey: issueId,
+        issueIdOrKey: issue.key,
         projectId: project.id,
         sprint: sprint && sprint[0],
         statusCategoryName: issue.fields.status.statusCategory.name,
