@@ -1,5 +1,5 @@
 import { requestJira, invoke } from "@forge/bridge";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { SUPPORTED_PROJECTS_STORAGE_KEY } from "../common/constants";
 import {
   SupportedProjects,
@@ -12,6 +12,9 @@ import { Box, Grid, Stack } from "@atlaskit/primitives";
 import Spinner from "@atlaskit/spinner";
 import Pagination from "@atlaskit/pagination";
 import { ProjectDetails } from "./ProjectDetails";
+import { Label } from "@atlaskit/form";
+import TextField from "@atlaskit/textfield";
+import { useDebounce } from "../hooks/useDebounce";
 
 export const ProjectList = () => {
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
@@ -22,6 +25,8 @@ export const ProjectList = () => {
   const [supportedProjects, setSupportedProjects] = useState<
     SupportedProjects | undefined
   >(undefined);
+  const [query, setQuery] = useState<string>("");
+  const debouncedQuery = useDebounce<string>(query, 500);
 
   const maxResults = 20;
 
@@ -29,7 +34,7 @@ export const ProjectList = () => {
     const startAt = (pageNumber - 1) * maxResults;
 
     requestJira(
-      `/rest/api/3/project/search?startAt=${startAt}&maxResults=${maxResults}&typeKey=software`
+      `/rest/api/3/project/search?startAt=${startAt}&maxResults=${maxResults}&typeKey=software&query=${query}`
     )
       .then((response) => response.json())
       .then((responseBody) => {
@@ -41,7 +46,7 @@ export const ProjectList = () => {
           values: projects,
         });
       });
-  }, [pageNumber]);
+  }, [debouncedQuery, pageNumber]);
 
   useEffect(() => {
     invoke("loadData", {
@@ -59,6 +64,10 @@ export const ProjectList = () => {
       }
     });
   }, []);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value);
+  };
 
   const onSupportedChange: UpdateSupportedProject = ({
     projectId,
@@ -108,6 +117,14 @@ export const ProjectList = () => {
     <Grid templateColumns="1fr 2fr" gap="space.500">
       <Box>
         <Stack space="space.100">
+          <Box>
+            <Label htmlFor="project_query_field">Project filter</Label>
+            <TextField
+              id="project_query_field"
+              placeholder="Enter project key or name to filter list..."
+              onChange={handleChange}
+            ></TextField>
+          </Box>
           {projectsList}
           <Pagination
             pages={pageNumbers}
