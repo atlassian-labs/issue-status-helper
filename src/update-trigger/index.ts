@@ -55,7 +55,7 @@ export async function run(event: UpdateEvent) {
     (change) => change.field === "status"
   );
 
-  const issueIdOrKey = event.issue.id;
+  const issueIdOrKey = event.issue.key;
   const issue = (await fetchIssue({ issueIdOrKey })).data;
   const { id: issueId, fields: issueFields } = issue;
   const { parent: parentRef, project, customfield_10020: sprint } = issueFields;

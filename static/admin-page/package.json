@@ -21,7 +21,7 @@
     "@atlaskit/tabs": "^13.4.4",
     "@atlaskit/toggle": "^12.6.9",
     "@atlaskit/tokens": "^1.14.0",
-    "@forge/bridge": "2.6.0",
+    "@forge/bridge": "^3.2.0",
     "@types/node": "^18.7.3",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@forge/bridge";
 import Spinner from "@atlaskit/spinner";
-import { Inline, Stack } from "@atlaskit/primitives";
+import { Grid, Inline, Stack } from "@atlaskit/primitives";
 import Image from "@atlaskit/image";
 import Heading from "@atlaskit/heading";
 import { IssueStatus, PreferredStatuses } from "../common/types";
@@ -79,7 +79,7 @@ export const IssueTypeStatuses = (props: IssueTypeStatusesProps) => {
         <Image style={{ height: 16 }} src={convertedImageUrl} />
         <Heading level="h400">{issueTypeName}</Heading>
       </Inline>
-      <Inline grow="fill" space="space.200">
+      <Grid templateColumns="1fr 1fr 1fr" gap="space.200">
         <SelectStatus
           categoryName="To Do"
           id="common_todo"
@@ -107,7 +107,7 @@ export const IssueTypeStatuses = (props: IssueTypeStatusesProps) => {
           onStatusSelected={onStatusSelected}
           offerDefaultOption={true}
         />
-      </Inline>
+      </Grid>
     </Stack>
   );
 };
