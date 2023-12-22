@@ -284,7 +284,7 @@ export type GetPreferredDateFields = (args: {}) => Promise<
   DateFields | undefined
 >;
 
-export type DatesToSet = "BOTH" | "START" | "END";
+export type DatesToSet = "NONE" | "BOTH" | "START" | "END";
 
 export type UpdateDatesWithComment = (args: {
   issueIdOrKey: string;
@@ -306,6 +306,7 @@ export type AddComment = (args: {
 export type MinMaxDates = {
   earliestStartString: string | null;
   latestEndString: string | null;
+  hasIncompleteChildren: boolean;
 };
 
 export type GetMinMaxChildDates = (args: {
