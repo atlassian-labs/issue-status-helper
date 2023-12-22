@@ -267,6 +267,7 @@ export type UpdateIssueStartAndEndDatesForSprintAssignment = (args: {
 export type StartAndEndDates = {
   startDate: string | null;
   endDate: string | null;
+  datetype: "SPRINT" | "CHILD_MIN_MAX" | "NONE";
 };
 
 export type GetSprintStartAndEndDates = (args: {

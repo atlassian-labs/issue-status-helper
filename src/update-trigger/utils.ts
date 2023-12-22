@@ -418,7 +418,7 @@ export const getSprintStartAndEndDates: GetSprintStartAndEndDates = ({
       endDate = sprint.endDate.split("T")[0];
     }
   }
-  return { startDate, endDate };
+  return { startDate, endDate, datetype: "SPRINT" };
 };
 
 /**
@@ -498,6 +498,7 @@ const getStartAndEndDatesToSet: GetStartAndEndDatesToSet = async ({
     return {
       startDate: minMaxDates.earliestStartString,
       endDate: minMaxDates.latestEndString,
+      datetype: "CHILD_MIN_MAX",
     };
   } else if (sprint !== undefined) {
     const sprintDates = getSprintStartAndEndDates({ sprint });
@@ -514,6 +515,7 @@ const getStartAndEndDatesToSet: GetStartAndEndDatesToSet = async ({
   return {
     startDate: null,
     endDate: null,
+    datetype: "NONE",
   };
 };
 
@@ -541,12 +543,22 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
     const { startFieldId, startFieldName, endFieldId, endFieldName } =
       preferredDateFields;
 
-    const { startDate, endDate } = await getStartAndEndDatesToSet({
+    const { startDate, endDate, datetype } = await getStartAndEndDatesToSet({
       issueIdOrKey,
       projectId,
       preferredDateFields,
       sprint,
     });
+
+    let doneDate = today;
+    if (
+      datetype === "CHILD_MIN_MAX" &&
+      endDate !== null &&
+      Date.parse(today) < Date.parse(endDate)
+    ) {
+      // Target end date is later than today, we should use this
+      doneDate = endDate;
+    }
 
     if (
       currentStatusCategoryName === "To Do" &&
@@ -577,7 +589,7 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
         startFieldId,
         endFieldId,
         startDate: today,
-        endDate: today,
+        endDate: doneDate,
         datesToSet: "BOTH",
         comment: `Setting '${startFieldName}' and '${endFieldName}'as a result of moving issue from a 'To Do' status to a 'Done' status`,
       });
@@ -609,7 +621,7 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
         startFieldId,
         endFieldId,
         startDate,
-        endDate: today,
+        endDate: doneDate,
         datesToSet: "END",
         comment: `Setting '${endFieldName}' as a result of moving issue from an  'In Progress' status to a 'Done' status`,
       });
