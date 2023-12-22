@@ -22,6 +22,7 @@ import {
   SetParentMinMaxDates,
   GetParentMinMaxDateValues,
   GetStartAndEndDatesToSet,
+  DatesToSet,
 } from "./types";
 import { StartOrEndDateFieldHasUpdated } from "./types";
 import {
@@ -666,6 +667,11 @@ export const updateDatesWithComment: UpdateDatesWithComment = async ({
     value: any;
   }> = [];
 
+  if (datesToSet === "NONE") {
+    console.log("No dates to set for issue", issueIdOrKey);
+    return;
+  }
+
   if ((datesToSet === "BOTH" || datesToSet === "END") && endDate) {
     const today = new Date().toISOString().split("T")[0];
     if (Date.parse(today) > Date.parse(endDate)) {
@@ -881,8 +887,9 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
     preferredDateFields,
   });
   if (preferredDateFields !== undefined && minMaxChildDates !== undefined) {
-    const { earliestStartString, latestEndString } = minMaxChildDates;
-    if (earliestStartString === undefined && latestEndString === undefined) {
+    const { earliestStartString, latestEndString, hasIncompleteChildren } =
+      minMaxChildDates;
+    if (earliestStartString === null && latestEndString === null) {
       // When there are no dates, don't make any updates!
       console.log(
         `Neither min nor max date found for children of ${parent.key}`
@@ -890,16 +897,58 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
       return;
     }
 
-    console.log(
-      `Updating start and end dates of ${parent.key} to match min/max of children: ${earliestStartString} -> ${latestEndString}`
-    );
-
     const { startFieldId, endFieldId } = preferredDateFields;
+
+    // Initially assume that both dates should be set...
+    let datesToSet: DatesToSet = "BOTH";
+
+    // Do NOT set the end date if the parent has incomplete children, and the current parent end date
+    // is later than the current end date...
+    // The reason for this is to avoid the case where a child dates have not been set and still need to
+    // be completed. Setting the parent to have the date of the last completed child is not helpful!
+    if (
+      hasIncompleteChildren &&
+      latestEndString !== null &&
+      parent.fields[endFieldId] !== null
+    ) {
+      const latestDate = Date.parse(latestEndString);
+      const parentEndDate = Date.parse(parent.fields[endFieldId]);
+      if (latestDate < parentEndDate) {
+        // Do not set the end date
+        datesToSet = "START";
+      }
+    }
+
+    if (earliestStartString === null) {
+      if (datesToSet === "START") {
+        // If we were ONLY planning to set a START date, but there isn't one, then we shouldn't set any!
+        datesToSet = "NONE";
+      } else {
+        // If we were planning on setting BOTH dates, but there is no start date - just set the end date
+        datesToSet = "END";
+      }
+    } else if (latestEndString === null) {
+      datesToSet = "START";
+    }
+
+    if (datesToSet === "START") {
+      console.log(
+        `Updating start date of ${parent.key} to match children: ${earliestStartString} (will not set end date )`
+      );
+    } else if (datesToSet === "END") {
+      console.log(
+        `Updating end date of ${parent.key} to match children: ${latestEndString} (will not set start date )`
+      );
+    } else {
+      console.log(
+        `Updating start and end dates of ${parent.key} to match min/max of children: ${earliestStartString} -> ${latestEndString}`
+      );
+    }
 
     await updateDatesWithComment({
       issueIdOrKey: parent.key,
       projectId: parent.fields.project.id,
-      datesToSet: "BOTH",
+      datesToSet,
       startFieldId,
       endFieldId,
       startDate: earliestStartString || null,
@@ -935,9 +984,15 @@ export const getMinMaxChildDates: GetMinMaxChildDates = async ({
   let earliestStartString: string | undefined = undefined;
   let latestEndString: string | undefined = undefined;
 
+  let hasIncompleteChildren = false;
+
   childIssues.issues.forEach((issue) => {
     const currentStart = issue.fields[startFieldId];
     const currentEnd = issue.fields[endFieldId];
+
+    if (issue.fields.status.statusCategory.name !== "Done") {
+      hasIncompleteChildren = true;
+    }
 
     if (currentStart !== null) {
       const currentStartDate = Date.parse(currentStart);
@@ -958,5 +1013,6 @@ export const getMinMaxChildDates: GetMinMaxChildDates = async ({
   return {
     earliestStartString: earliestStartString || null,
     latestEndString: latestEndString || null,
+    hasIncompleteChildren,
   };
 };
