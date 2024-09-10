@@ -18,8 +18,8 @@
     "ts-jest": "^28.0.8"
   },
   "dependencies": {
-    "@forge/api": "^2.22.1",
+    "@forge/api": "^3.9.1",
     "@forge/resolver": "^1.5.13",
-    "@forge/ui": "^1.10.2"
+    "@forge/ui": "^1.11.1"
   }
 }
