@@ -5,6 +5,7 @@ import {
   IssueStatusCategoryName,
   PreferredStatuses,
   Project,
+  ProjectPreferences,
 } from "../../static/admin-page/src/common/types";
 
 export type ChangeLogItem = {
@@ -320,6 +321,7 @@ export type GetParentMinMaxDateValues = (args: {
   issueIdOrKey: string;
   projectId: string;
   preferredDateFields?: DateFields;
+  projectPreferences?: ProjectPreferences;
 }) => Promise<MinMaxDates | undefined>;
 
 export type GetStartAndEndDatesToSet = (args: {
@@ -327,6 +329,7 @@ export type GetStartAndEndDatesToSet = (args: {
   projectId: string;
   preferredDateFields: DateFields;
   sprint?: Sprint;
+  projectPreferences?: ProjectPreferences;
 }) => Promise<StartAndEndDates>;
 
 export type SetParentMinMaxDates = (args: {
@@ -337,6 +340,7 @@ export type SetParentMinMaxDates = (args: {
 export type GetParentMinMaxDatesToSet = (args: {
   earliestStart: number | undefined;
   latestEnd: number | undefined;
+  projectPreferences: ProjectPreferences;
 }) => DatesToSet | undefined;
 
 export type StartOrEndDateFieldHasUpdated = (args: {

@@ -11,6 +11,7 @@ export type ProjectPreferences = {
   commentsEnabled?: boolean;
   sprintDatesEnabled?: boolean;
   childMinMaxDatesEnabled?: boolean;
+  shrinkParentEnabled?: boolean;
 };
 
 export type PreferredStatuses = {

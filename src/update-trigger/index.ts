@@ -39,7 +39,10 @@ export async function run(event: UpdateEvent) {
           issueIdOrKey: parentRef.key,
         })
       ).data;
-      await setParentMinMaxDates({ parent, preferredDateFields });
+      await setParentMinMaxDates({
+        parent,
+        preferredDateFields,
+      });
     }
   }
 

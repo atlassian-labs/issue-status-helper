@@ -485,11 +485,13 @@ const getStartAndEndDatesToSet: GetStartAndEndDatesToSet = async ({
   projectId,
   preferredDateFields,
   sprint,
+  projectPreferences,
 }) => {
   const minMaxDates = await getParentMinMaxDateValues({
     issueIdOrKey,
     projectId,
     preferredDateFields,
+    projectPreferences,
   });
   if (minMaxDates !== undefined) {
     console.log(
@@ -543,11 +545,18 @@ export const updateIssueStartAndEndDatesForTransition: UpdateIssueStartAndEndDat
     const { startFieldId, startFieldName, endFieldId, endFieldName } =
       preferredDateFields;
 
+    const projectPreferences: ProjectPreferences | undefined =
+      await storage.get(
+        generateProjectPreferencesStorageKey({
+          projectId,
+        })
+      );
     const { startDate, endDate, datetype } = await getStartAndEndDatesToSet({
       issueIdOrKey,
       projectId,
       preferredDateFields,
       sprint,
+      projectPreferences,
     });
 
     let doneDate = today;
@@ -709,7 +718,7 @@ export const updateDatesWithComment: UpdateDatesWithComment = async ({
     issueIdOrKey,
     customFields,
   });
-  await addComment({
+  return await addComment({
     issueIdOrKey,
     projectId,
     comment,
@@ -865,15 +874,14 @@ export const getParentMinMaxDateValues: GetParentMinMaxDateValues = async ({
   issueIdOrKey,
   projectId,
   preferredDateFields,
+  projectPreferences,
 }) => {
-  const projectPreferences: ProjectPreferences | undefined = await storage.get(
-    generateProjectPreferencesStorageKey({
-      projectId,
-    })
-  );
   if (
     projectPreferences === undefined ||
-    !projectPreferences.childMinMaxDatesEnabled
+    !(
+      projectPreferences.childMinMaxDatesEnabled &&
+      projectPreferences.shrinkParentEnabled
+    )
   ) {
     console.log(
       `Will not set min/max dates for ${issueIdOrKey} because child inheritance is not enabled for ${projectId}`
@@ -896,11 +904,22 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
   parent,
   preferredDateFields,
 }) => {
+  const projectId = parent.fields.project.id;
+  const projectPreferences: ProjectPreferences | undefined = await storage.get(
+    generateProjectPreferencesStorageKey({
+      projectId,
+    })
+  );
+
+  const childMinMaxDatesEnabled = projectPreferences?.childMinMaxDatesEnabled;
+  const shrinkParentEnabled = projectPreferences?.shrinkParentEnabled;
   const minMaxChildDates = await getParentMinMaxDateValues({
-    projectId: parent.fields.project.id,
+    projectId,
     issueIdOrKey: parent.key,
     preferredDateFields,
+    projectPreferences,
   });
+
   if (preferredDateFields !== undefined && minMaxChildDates !== undefined) {
     const { earliestStartString, latestEndString, hasIncompleteChildren } =
       minMaxChildDates;
@@ -917,33 +936,47 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
     // Initially assume that both dates should be set...
     let datesToSet: DatesToSet = "BOTH";
 
-    // Do NOT set the end date if the parent has incomplete children, and the current parent end date
-    // is later than the current end date...
-    // The reason for this is to avoid the case where a child dates have not been set and still need to
-    // be completed. Setting the parent to have the date of the last completed child is not helpful!
-    if (
-      hasIncompleteChildren &&
-      latestEndString !== null &&
-      parent.fields[endFieldId] !== null
-    ) {
-      const latestDate = Date.parse(latestEndString);
-      const parentEndDate = Date.parse(parent.fields[endFieldId]);
-      if (latestDate < parentEndDate) {
-        // Do not set the end date
+    // GROW
+    if (childMinMaxDatesEnabled && !shrinkParentEnabled) {
+      // Do NOT set the end date if the parent has incomplete children, and the current parent end date
+      // is later than the current end date...
+      // The reason for this is to avoid the case where a child dates have not been set and still need to
+      // be completed. Setting the parent to have the date of the last completed child is not helpful!
+      if (
+        hasIncompleteChildren &&
+        latestEndString !== null &&
+        parent.fields[endFieldId] !== null
+      ) {
+        const latestDate = Date.parse(latestEndString);
+        const parentEndDate = Date.parse(parent.fields[endFieldId]);
+        if (latestDate < parentEndDate) {
+          // Do not set the end date
+          datesToSet = "START";
+        }
+      }
+
+      if (earliestStartString === null) {
+        if (datesToSet === "START") {
+          // If we were ONLY planning to set a START date, but there isn't one, then we shouldn't set any!
+          datesToSet = "NONE";
+        } else {
+          // If we were planning on setting BOTH dates, but there is no start date - just set the end date
+          datesToSet = "END";
+        }
+      } else if (latestEndString === null) {
         datesToSet = "START";
       }
-    }
-
-    if (earliestStartString === null) {
-      if (datesToSet === "START") {
-        // If we were ONLY planning to set a START date, but there isn't one, then we shouldn't set any!
-        datesToSet = "NONE";
-      } else {
-        // If we were planning on setting BOTH dates, but there is no start date - just set the end date
+    } else if (childMinMaxDatesEnabled && shrinkParentEnabled) {
+      // SHRINK
+      if (earliestStartString && latestEndString) {
+        datesToSet = "BOTH";
+      } else if (earliestStartString) {
+        datesToSet = "START";
+      } else if (latestEndString) {
         datesToSet = "END";
+      } else {
+        datesToSet = "NONE";
       }
-    } else if (latestEndString === null) {
-      datesToSet = "START";
     }
 
     if (datesToSet === "START") {
@@ -960,7 +993,7 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
       );
     }
 
-    await updateDatesWithComment({
+    return await updateDatesWithComment({
       issueIdOrKey: parent.key,
       projectId: parent.fields.project.id,
       datesToSet,

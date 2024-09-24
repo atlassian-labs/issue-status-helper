@@ -38,6 +38,7 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
           commentsEnabled: true,
           sprintDatesEnabled: false,
           childMinMaxDatesEnabled: false,
+          shrinkParentEnabled: false,
         });
       } else {
         setProjectPreferences(loadedProjectPreferences);
@@ -66,6 +67,7 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
     commentsEnabled = true,
     sprintDatesEnabled = false,
     childMinMaxDatesEnabled = false,
+    shrinkParentEnabled = false,
   } = projectPreferences;
 
   return (
@@ -118,6 +120,23 @@ export const ProjectConfig = (props: ProjectConfigProps) => {
           }
           label={`Enable start and end date inheritance`}
           name="dateInheritance"
+        />
+      </Stack>
+      <Stack space="space.025">
+        <Label htmlFor="shrinkParentEnabledToggle">
+          Parent issues inherit earliest end date even if some children have no
+          end date
+        </Label>
+        <Toggle
+          isChecked={shrinkParentEnabled}
+          onChange={() =>
+            onToggle({
+              key: "shrinkParentEnabled",
+              enabled: !shrinkParentEnabled,
+            })
+          }
+          label={`Enable start and end date inheritance`}
+          name="dateInheritanceShrink"
         />
       </Stack>
     </Stack>
