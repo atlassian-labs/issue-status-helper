@@ -12,7 +12,7 @@ import NoResultsImage from "../images/file-link-no-results.png";
 import { ProjectConfig } from "./ProjectConfig";
 
 type ProjectDetailsProps = {
-  project?: Project;
+  projectId?: string;
   projectsLoaded: boolean;
 };
 
@@ -38,9 +38,9 @@ export const generateProjectPreferencesStorageKey: GenerateProjectPreferencesSto
   };
 
 export const ProjectDetails = (props: ProjectDetailsProps) => {
-  const { project, projectsLoaded } = props;
+  const { projectId, projectsLoaded } = props;
 
-  if (!projectsLoaded || project === undefined) {
+  if (!projectsLoaded || projectId === undefined) {
     return (
       <EmptyState
         header="Select a project"
@@ -53,9 +53,17 @@ export const ProjectDetails = (props: ProjectDetailsProps) => {
     ProjectIssueType[] | undefined
   >(undefined);
 
+  const [project, setProject] = useState<Project | undefined>();
+
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[] | undefined>();
 
-  const { id: projectId, name: projectName, key, avatarUrls } = project;
+  // const { id: projectId, name: projectName, key, avatarUrls } = project;
+
+  useEffect(() => {
+    requestJira(`/rest/api/2/project/${projectId}`)
+      .then((response) => response.json())
+      .then((responseBody) => setProject(responseBody));
+  }, [projectId]);
 
   useEffect(() => {
     requestJira(`/rest/api/3/issuetype`)
@@ -64,16 +72,22 @@ export const ProjectDetails = (props: ProjectDetailsProps) => {
   }, []);
 
   useEffect(() => {
-    if (project !== undefined) {
-      requestJira(`/rest/api/2/project/${project.id}/statuses`)
+    if (projectId !== undefined) {
+      requestJira(`/rest/api/2/project/${projectId}/statuses`)
         .then((response) => response.json())
         .then((responseBody) => setProjectIssueTypes(responseBody));
     }
-  }, [project]);
+  }, [projectId]);
 
-  if (projectIssueTypes === undefined || allIssueTypes === undefined) {
+  if (
+    project === undefined ||
+    projectIssueTypes === undefined ||
+    allIssueTypes === undefined
+  ) {
     return <Spinner />;
   }
+
+  const { name: projectName, key, avatarUrls } = project;
 
   // Create a map of all the hierarchy levels so that they can be displayed in order...
   const levelToIssueTypes: LevelToIssueTypeMap = projectIssueTypes.reduce(

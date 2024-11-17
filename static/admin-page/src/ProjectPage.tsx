@@ -5,7 +5,10 @@ import { Stack } from "@atlaskit/primitives";
 import Spinner from "@atlaskit/spinner";
 import Toggle from "@atlaskit/toggle";
 import { ProjectConfig } from "./components/ProjectConfig";
-import { generateProjectPreferencesStorageKey } from "./components/ProjectDetails";
+import {
+  generateProjectPreferencesStorageKey,
+  ProjectDetails,
+} from "./components/ProjectDetails";
 import { ExtensionContext, UpdateSupportedProject } from "./types";
 import { SupportedProject, SupportedProjects } from "./common/types";
 import { SUPPORTED_PROJECTS_STORAGE_KEY } from "./common/constants";
@@ -100,9 +103,12 @@ function ProjectPage(props: ProjectPageProps) {
         />
       </Stack>
       {isSupported && (
-        <ProjectConfig
-          storageKey={generateProjectPreferencesStorageKey({ projectId: id })}
-        />
+        <Stack>
+          <ProjectConfig
+            storageKey={generateProjectPreferencesStorageKey({ projectId: id })}
+          />
+          <ProjectDetails projectId={id} projectsLoaded={true} />
+        </Stack>
       )}
     </Stack>
   );

@@ -136,7 +136,7 @@ export const ProjectList = () => {
       </Box>
       <Box>
         <ProjectDetails
-          project={selectedProject}
+          projectId={selectedProject?.id}
           projectsLoaded={projectSearchResults !== undefined}
         />
       </Box>

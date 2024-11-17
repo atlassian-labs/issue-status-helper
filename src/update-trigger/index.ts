@@ -33,6 +33,10 @@ export async function run(event: UpdateEvent) {
     const issue = (await fetchIssue({ issueIdOrKey })).data;
     const { fields: issueFields } = issue;
     const { parent: parentRef } = issueFields;
+
+    // TODO: Should we also validate that the current issue dates that have been set are valid?
+
+    // If the issue has a parent then update the start and end dates of the parent to reflect the latest information from the children...
     if (parentRef) {
       const parent = (
         await fetchIssue({

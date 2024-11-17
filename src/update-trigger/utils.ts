@@ -987,7 +987,7 @@ export const setParentMinMaxDates: SetParentMinMaxDates = async ({
       console.log(
         `Updating end date of ${parent.key} to match children: ${latestEndString} (will not set start date )`
       );
-    } else {
+    } else if (datesToSet === "BOTH") {
       console.log(
         `Updating start and end dates of ${parent.key} to match min/max of children: ${earliestStartString} -> ${latestEndString}`
       );
