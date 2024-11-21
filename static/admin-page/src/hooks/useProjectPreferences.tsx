@@ -30,7 +30,7 @@ export default function useProjectPreferences(
     } else {
       setProjectPreferences(loadedProjectPreferences);
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     loadProjectPreferences();
