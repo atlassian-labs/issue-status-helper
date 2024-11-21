@@ -76,11 +76,6 @@ export const ProjectStartAndEndFields = (
     END: endFieldId,
   };
 
-  console.log(
-    ">> DateFieldsEnabled:",
-    dateFieldsEnabled,
-    globalDatePreferences.enabled
-  );
   let enabled = dateFieldsEnabled;
   if (dateFieldsEnabled === undefined) {
     enabled = globalDatePreferences.enabled;
