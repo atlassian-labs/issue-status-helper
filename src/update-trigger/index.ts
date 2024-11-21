@@ -26,6 +26,19 @@ export async function run(event: UpdateEvent) {
   const issue = (await fetchIssue({ issueIdOrKey })).data;
   const { id: issueId, fields: issueFields } = issue;
   const { parent: parentRef, project, customfield_10020: sprint } = issueFields;
+
+  const isIssueProjectSupported = await isProjectSupported({
+    issueId,
+    projectId: project.id,
+  });
+
+  if (!isIssueProjectSupported) {
+    console.log(
+      `Issue ${event.issue.key} is not supported by the project preferences`
+    );
+    return;
+  }
+
   const projectPreferences: ProjectPreferences | undefined = await storage.get(
     generateProjectPreferencesStorageKey({ projectId: project.id })
   );
