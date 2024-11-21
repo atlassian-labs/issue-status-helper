@@ -377,8 +377,20 @@ export const getPreferredDateFields: GetPreferredDateFields = async ({
   const projectPreferredEndCustomFieldId =
     projectPreferences?.endFieldId || "-1";
 
+  console.log(
+    "Project preferred date fields",
+    projectPreferredStartCustomFieldId,
+    projectPreferredEndCustomFieldId
+  );
+
   const preferredDateFields: PreferredDateFields | undefined =
     await storage.get(START_AND_END_FIELDS_STORAGE_KEY);
+
+  console.log(
+    "Global preferred date fields",
+    preferredDateFields?.START,
+    preferredDateFields?.END
+  );
 
   const startCustomFieldId = getPreferredDateField(
     projectPreferredStartCustomFieldId,
@@ -389,14 +401,17 @@ export const getPreferredDateFields: GetPreferredDateFields = async ({
     preferredDateFields?.END
   );
 
-  if (startCustomFieldId === undefined || endCustomFieldId) {
+  console.log("Using custom fields", startCustomFieldId, endCustomFieldId);
+
+  if (startCustomFieldId === undefined || endCustomFieldId === undefined) {
     // No preferred date fields have been configured
     console.log("No preferred date fields configured");
     return;
   }
 
   // TODO: This might be an issue if enabled for projects, but not globally
-  const enabled = preferredDateFields?.enabled;
+  const enabled =
+    preferredDateFields?.enabled && projectPreferences?.dateFieldsEnabled;
   if (enabled === false && projectPreferences?.dateFieldsEnabled === false) {
     console.log(`Updating start and end date fields is not enabled`);
     return;

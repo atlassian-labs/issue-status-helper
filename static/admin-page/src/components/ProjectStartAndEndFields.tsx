@@ -12,6 +12,7 @@ import {
 import Toggle from "@atlaskit/toggle";
 import { Label } from "@atlaskit/form";
 import useProjectPreferences from "../hooks/useProjectPreferences";
+import useGlobalDatePreferences from "../hooks/useGlobalDatePreferences";
 
 type ProjectStartAndEndFieldProps = {
   projectId: string;
@@ -24,6 +25,7 @@ export const ProjectStartAndEndFields = (
   const [dateFields, setDateFields] = useState<CustomField[] | undefined>();
   const [projectPreferences, updateProjectPreferences] =
     useProjectPreferences(projectId);
+  const [globalDatePreferences] = useGlobalDatePreferences(projectId);
 
   useEffect(() => {
     requestJira("/rest/api/3/field/search?query=date")
@@ -60,7 +62,11 @@ export const ProjectStartAndEndFields = (
     updateProjectPreferences(updatedProjectPreferences);
   };
 
-  if (projectPreferences === undefined || dateFields === undefined) {
+  if (
+    projectPreferences === undefined ||
+    dateFields === undefined ||
+    globalDatePreferences === undefined
+  ) {
     return <Spinner />;
   }
 
@@ -70,14 +76,24 @@ export const ProjectStartAndEndFields = (
     END: endFieldId,
   };
 
+  console.log(
+    ">> DateFieldsEnabled:",
+    dateFieldsEnabled,
+    globalDatePreferences.enabled
+  );
+  let enabled = dateFieldsEnabled;
+  if (dateFieldsEnabled === undefined) {
+    enabled = globalDatePreferences.enabled;
+  }
+
   return (
     <Stack space="space.200">
       <Stack>
         <Label htmlFor="Enabled">Update date fields</Label>
         <Toggle
           id="Enabled"
-          isChecked={dateFieldsEnabled}
-          onChange={() => onSupportedChange(!dateFieldsEnabled)}
+          isChecked={enabled}
+          onChange={() => onSupportedChange(!enabled)}
           value="Enabled"
           name="enabledDateFields"
         />

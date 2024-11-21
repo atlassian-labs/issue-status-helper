@@ -3,10 +3,9 @@ import { PreferredDateFields } from "../common/types";
 import { START_AND_END_FIELDS_STORAGE_KEY } from "../common/constants";
 import { invoke } from "@forge/bridge";
 
-export default function useGlobalDatePreferences(): [
-  PreferredDateFields | undefined,
-  (value: PreferredDateFields) => void
-] {
+export default function useGlobalDatePreferences(
+  projectId?: string
+): [PreferredDateFields | undefined, (value: PreferredDateFields) => void] {
   const [globalDatePreferences, setGlobalDatePreferences] = useState<
     PreferredDateFields | undefined
   >(undefined);
@@ -18,7 +17,7 @@ export default function useGlobalDatePreferences(): [
       key: START_AND_END_FIELDS_STORAGE_KEY,
     });
     setGlobalDatePreferences(loadedGlobalDatePreferences);
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     loadGlobalDatePreferences();
