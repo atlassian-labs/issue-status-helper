@@ -23,10 +23,10 @@ export const StartAndEndFields = (props: StartAndEndFieldProps) => {
     useGlobalDatePreferences();
 
   useEffect(() => {
-    requestJira("/rest/api/3/field/search?query=date")
+    requestJira("/rest/api/3/field")
       .then((response) => response.json())
       .then((responseBody) => {
-        const customFields = responseBody.values as CustomField[];
+        const customFields = responseBody as CustomField[];
         const dateFields = customFields
           .filter((customField) => customField.schema?.type === "date")
           .sort((a, b) => a.name.localeCompare(b.name));
