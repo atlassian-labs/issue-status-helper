@@ -9,7 +9,6 @@ import { ExtensionContext, UpdateSupportedProject } from "./types";
 import { SupportedProject, SupportedProjects } from "./common/types";
 import { SUPPORTED_PROJECTS_STORAGE_KEY } from "./common/constants";
 import SectionMessage from "@atlaskit/section-message";
-import { StartAndEndFields } from "./components/StartAndEndFields";
 
 type ProjectPageProps = {
   extensionContext: ExtensionContext;
@@ -85,30 +84,30 @@ function ProjectPage(props: ProjectPageProps) {
         </p>
       </SectionMessage>
 
-      {isSupported && (
-        <Stack>
-          <Stack space="space.025">
-            <Label htmlFor="commentsEnabledToggle">
-              Issue Status Helper is enabled for this project
-            </Label>
-            <Toggle
-              key={id}
-              isChecked={isSupported}
-              onChange={() =>
-                onSupportedChange({ projectId: id, isSupported: !isSupported })
-              }
-              label={`${id} (${key})`}
-              value={id}
-              name="project"
-            />
-          </Stack>
+      <Stack>
+        <Stack space="space.025">
+          <Label htmlFor="commentsEnabledToggle">
+            Issue Status Helper is enabled for this project
+          </Label>
+          <Toggle
+            key={id}
+            isChecked={isSupported}
+            onChange={() =>
+              onSupportedChange({ projectId: id, isSupported: !isSupported })
+            }
+            label={`${id} (${key})`}
+            value={id}
+            name="project"
+          />
+        </Stack>
+        {isSupported && (
           <ProjectDetails
             projectId={id}
             projectsLoaded={true}
             projectAdminView={true}
           />
-        </Stack>
-      )}
+        )}
+      </Stack>
     </Stack>
   );
 }
