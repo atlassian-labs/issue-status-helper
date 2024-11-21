@@ -282,9 +282,9 @@ export type DateFields = {
   endFieldName: string;
 };
 
-export type GetPreferredDateFields = (args: {}) => Promise<
-  DateFields | undefined
->;
+export type GetPreferredDateFields = (args: {
+  projectPreferences: ProjectPreferences | undefined;
+}) => Promise<DateFields | undefined>;
 
 export type DatesToSet = "NONE" | "BOTH" | "START" | "END";
 

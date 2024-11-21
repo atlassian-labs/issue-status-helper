@@ -1,26 +1,29 @@
 import { useEffect, useState } from "react";
-import { invoke, requestJira } from "@forge/bridge";
+import { requestJira } from "@forge/bridge";
 import { Stack } from "@atlaskit/primitives";
 import Spinner from "@atlaskit/spinner";
-import { START_AND_END_FIELDS_STORAGE_KEY } from "../common/constants";
 import { OnDateFieldSelected } from "../types";
 import { SelectDateField } from "./SelectDateField";
-import { CustomField, PreferredDateFields } from "../common/types";
+import {
+  CustomField,
+  PreferredDateFields,
+  ProjectPreferences,
+} from "../common/types";
 import Toggle from "@atlaskit/toggle";
 import { Label } from "@atlaskit/form";
 import useProjectPreferences from "../hooks/useProjectPreferences";
-import useGlobalDatePreferences from "../hooks/useGlobalDatePreferences";
 
-type StartAndEndFieldProps = {
-  globalConfig: boolean;
-  projectId?: string;
+type ProjectStartAndEndFieldProps = {
+  projectId: string;
 };
 
-export const StartAndEndFields = (props: StartAndEndFieldProps) => {
-  const { globalConfig, projectId } = props;
+export const ProjectStartAndEndFields = (
+  props: ProjectStartAndEndFieldProps
+) => {
+  const { projectId } = props;
   const [dateFields, setDateFields] = useState<CustomField[] | undefined>();
-  const [preferredDateFields, updateGlobalDatePreferences] =
-    useGlobalDatePreferences();
+  const [projectPreferences, updateProjectPreferences] =
+    useProjectPreferences(projectId);
 
   useEffect(() => {
     requestJira("/rest/api/3/field/search?query=date")
@@ -38,26 +41,34 @@ export const StartAndEndFields = (props: StartAndEndFieldProps) => {
     dateFieldId,
     dateFieldType,
   }) => {
-    const updatedPreferredDateFields: PreferredDateFields = {
-      ...(preferredDateFields && preferredDateFields),
-      [dateFieldType]: dateFieldId,
+    const preference =
+      dateFieldType === "START" ? "startFieldId" : "endFieldId";
+    const updatedProjectPreferences: ProjectPreferences = {
+      ...projectPreferences,
+      [preference]: dateFieldId,
     };
 
-    updateGlobalDatePreferences(updatedPreferredDateFields);
+    updateProjectPreferences(updatedProjectPreferences);
   };
 
   const onSupportedChange = (isEnabled: boolean) => {
-    const updatedPreferredDateFields = {
-      ...preferredDateFields,
-      enabled: isEnabled,
+    const updatedProjectPreferences: ProjectPreferences = {
+      ...projectPreferences,
+      dateFieldsEnabled: isEnabled,
     };
 
-    updateGlobalDatePreferences(updatedPreferredDateFields);
+    updateProjectPreferences(updatedProjectPreferences);
   };
 
-  if (preferredDateFields === undefined || dateFields === undefined) {
+  if (projectPreferences === undefined || dateFields === undefined) {
     return <Spinner />;
   }
+
+  const { dateFieldsEnabled, startFieldId, endFieldId } = projectPreferences;
+  const preferredDateFields: PreferredDateFields = {
+    START: startFieldId,
+    END: endFieldId,
+  };
 
   return (
     <Stack space="space.200">
@@ -65,8 +76,8 @@ export const StartAndEndFields = (props: StartAndEndFieldProps) => {
         <Label htmlFor="Enabled">Update date fields</Label>
         <Toggle
           id="Enabled"
-          isChecked={preferredDateFields.enabled}
-          onChange={() => onSupportedChange(!preferredDateFields.enabled)}
+          isChecked={dateFieldsEnabled}
+          onChange={() => onSupportedChange(!dateFieldsEnabled)}
           value="Enabled"
           name="enabledDateFields"
         />
@@ -78,7 +89,7 @@ export const StartAndEndFields = (props: StartAndEndFieldProps) => {
         dateFields={dateFields}
         preferredDateFields={preferredDateFields}
         onDateFieldSelected={onDateFieldSelected}
-        offerDefaultOption={!globalConfig}
+        offerDefaultOption={true}
       />
       <SelectDateField
         dateFieldType="END"
@@ -87,7 +98,7 @@ export const StartAndEndFields = (props: StartAndEndFieldProps) => {
         dateFields={dateFields}
         preferredDateFields={preferredDateFields}
         onDateFieldSelected={onDateFieldSelected}
-        offerDefaultOption={!globalConfig}
+        offerDefaultOption={true}
       />
     </Stack>
   );

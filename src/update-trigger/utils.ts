@@ -356,22 +356,48 @@ export const getCustomField: GetCustomField = async ({ customFieldId }) => {
   return;
 };
 
-export const getPreferredDateFields: GetPreferredDateFields = async ({}) => {
+export const getPreferredDateField = (
+  projectPreferredDateField: string,
+  globalPreferredDateField: string | undefined
+): string | undefined => {
+  if (projectPreferredDateField !== "-1") {
+    return projectPreferredDateField;
+  }
+  return globalPreferredDateField;
+};
+
+export const getPreferredDateFields: GetPreferredDateFields = async ({
+  projectPreferences,
+}) => {
+  // Check for a project preferred custom field id. If this is not set then we'll use the
+  // global configuration. But if it is configured as "-1" then it indicates a preference
+  // to also use global configuration, so default to "-1" (which is not a valid custom field id)
+  const projectPreferredStartCustomFieldId =
+    projectPreferences?.startFieldId || "-1";
+  const projectPreferredEndCustomFieldId =
+    projectPreferences?.endFieldId || "-1";
+
   const preferredDateFields: PreferredDateFields | undefined =
     await storage.get(START_AND_END_FIELDS_STORAGE_KEY);
 
-  if (preferredDateFields === undefined) {
+  const startCustomFieldId = getPreferredDateField(
+    projectPreferredStartCustomFieldId,
+    preferredDateFields?.START
+  );
+  const endCustomFieldId = getPreferredDateField(
+    projectPreferredEndCustomFieldId,
+    preferredDateFields?.END
+  );
+
+  if (startCustomFieldId === undefined || endCustomFieldId) {
     // No preferred date fields have been configured
     console.log("No preferred date fields configured");
     return;
   }
 
-  const {
-    START: startCustomFieldId,
-    END: endCustomFieldId,
-    enabled = false,
-  } = preferredDateFields;
-  if (enabled === false) {
+  // TODO: This might be an issue if enabled for projects, but not globally
+  const enabled = preferredDateFields?.enabled;
+  if (enabled === false && projectPreferences?.dateFieldsEnabled === false) {
     console.log(`Updating start and end date fields is not enabled`);
     return;
   }

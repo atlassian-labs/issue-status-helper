@@ -46,7 +46,7 @@ function AdminPage() {
               <Heading level="h700">Status configurations</Heading>
               <CommonStatuses />
               <Heading level="h700">Date field configurations</Heading>
-              <StartAndEndFields />
+              <StartAndEndFields globalConfig={true} />
             </Stack>
           </Box>
         </TabPanel>
