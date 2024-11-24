@@ -11,18 +11,25 @@ type SelectDateFieldProps = {
   dateFields: CustomField[];
   preferredDateFields: PreferredDateFields;
   dateFieldType: DateFieldType;
+  offerDefaultOption: boolean;
 };
 
 type CreateDateFieldOptions = (args: {
   dateFields: CustomField[];
+  offerDefaultOption: boolean;
 }) => StatusOption[];
 
-const createDateFieldOptions: CreateDateFieldOptions = ({ dateFields }) => {
+const createDateFieldOptions: CreateDateFieldOptions = ({
+  dateFields,
+  offerDefaultOption,
+}) => {
   const dateFieldOptions = dateFields.map((customField) => {
     const label = `${customField.name}`;
     return { label, value: customField.id };
   });
-
+  if (offerDefaultOption === true) {
+    dateFieldOptions.unshift({ label: "Use default ", value: "-1" });
+  }
   return dateFieldOptions;
 };
 
@@ -34,11 +41,13 @@ export const SelectDateField = (props: SelectDateFieldProps) => {
     onDateFieldSelected,
     preferredDateFields,
     dateFields,
+    offerDefaultOption,
   } = props;
 
   const value = preferredDateFields[dateFieldType];
   const options = createDateFieldOptions({
     dateFields,
+    offerDefaultOption,
   });
   let initiallySelectedOption = options.find(
     (option) => option.value === value

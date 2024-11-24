@@ -4,11 +4,7 @@ import { Label } from "@atlaskit/form";
 import { Stack } from "@atlaskit/primitives";
 import Spinner from "@atlaskit/spinner";
 import Toggle from "@atlaskit/toggle";
-import { ProjectConfig } from "./components/ProjectConfig";
-import {
-  generateProjectPreferencesStorageKey,
-  ProjectDetails,
-} from "./components/ProjectDetails";
+import { ProjectDetails } from "./components/ProjectDetails";
 import { ExtensionContext, UpdateSupportedProject } from "./types";
 import { SupportedProject, SupportedProjects } from "./common/types";
 import { SUPPORTED_PROJECTS_STORAGE_KEY } from "./common/constants";
@@ -87,29 +83,31 @@ function ProjectPage(props: ProjectPageProps) {
           type.
         </p>
       </SectionMessage>
-      <Stack space="space.025">
-        <Label htmlFor="commentsEnabledToggle">
-          Issue Status Helper is enabled for this project
-        </Label>
-        <Toggle
-          key={id}
-          isChecked={isSupported}
-          onChange={() =>
-            onSupportedChange({ projectId: id, isSupported: !isSupported })
-          }
-          label={`${id} (${key})`}
-          value={id}
-          name="project"
-        />
-      </Stack>
-      {isSupported && (
-        <Stack>
-          <ProjectConfig
-            storageKey={generateProjectPreferencesStorageKey({ projectId: id })}
+
+      <Stack>
+        <Stack space="space.025">
+          <Label htmlFor="commentsEnabledToggle">
+            Issue Status Helper is enabled for this project
+          </Label>
+          <Toggle
+            key={id}
+            isChecked={isSupported}
+            onChange={() =>
+              onSupportedChange({ projectId: id, isSupported: !isSupported })
+            }
+            label={`${id} (${key})`}
+            value={id}
+            name="project"
           />
-          <ProjectDetails projectId={id} projectsLoaded={true} />
         </Stack>
-      )}
+        {isSupported && (
+          <ProjectDetails
+            projectId={id}
+            projectsLoaded={true}
+            projectAdminView={true}
+          />
+        )}
+      </Stack>
     </Stack>
   );
 }

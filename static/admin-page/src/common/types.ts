@@ -12,6 +12,9 @@ export type ProjectPreferences = {
   sprintDatesEnabled?: boolean;
   childMinMaxDatesEnabled?: boolean;
   shrinkParentEnabled?: boolean;
+  dateFieldsEnabled?: boolean;
+  startFieldId?: string;
+  endFieldId?: string;
 };
 
 export type PreferredStatuses = {

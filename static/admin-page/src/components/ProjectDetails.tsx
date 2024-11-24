@@ -6,31 +6,23 @@ import { IssueType, Project, ProjectIssueType } from "../types";
 import { Inline, Stack } from "@atlaskit/primitives";
 import Image from "@atlaskit/image";
 import Heading from "@atlaskit/heading";
-import { IssueTypeStatuses } from "./IssueTypeStatuses";
 // @ts-ignore
 import NoResultsImage from "../images/file-link-no-results.png";
 import { ProjectConfig } from "./ProjectConfig";
+import { ProjectStartAndEndFields } from "./ProjectStartAndEndFields";
+import { IssueMappingForHierarchyLevels } from "./IssueMappingForHierarchyLevels";
 
 type ProjectDetailsProps = {
   projectId?: string;
   projectsLoaded: boolean;
+  projectAdminView?: boolean;
 };
-
-type GenerateProjectIssueTypeStatusesStorageKey = (args: {
-  projectId: string;
-  issueTypeId: string;
-}) => string;
 
 type GenerateProjectPreferencesStorageKey = (args: {
   projectId: string;
 }) => string;
 
-type LevelToIssueTypeMap = Array<ProjectIssueType[] | undefined>;
-
-export const generateProjectIssueTypeStatusesStorageKey: GenerateProjectIssueTypeStatusesStorageKey =
-  ({ projectId, issueTypeId }) => {
-    return `PROJECT:${projectId}-ISSUETYPE:${issueTypeId}`;
-  };
+export type LevelToIssueTypeMap = Array<ProjectIssueType[]>;
 
 export const generateProjectPreferencesStorageKey: GenerateProjectPreferencesStorageKey =
   ({ projectId }) => {
@@ -38,7 +30,7 @@ export const generateProjectPreferencesStorageKey: GenerateProjectPreferencesSto
   };
 
 export const ProjectDetails = (props: ProjectDetailsProps) => {
-  const { projectId, projectsLoaded } = props;
+  const { projectId, projectsLoaded, projectAdminView = false } = props;
 
   if (!projectsLoaded || projectId === undefined) {
     return (
@@ -56,8 +48,6 @@ export const ProjectDetails = (props: ProjectDetailsProps) => {
   const [project, setProject] = useState<Project | undefined>();
 
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[] | undefined>();
-
-  // const { id: projectId, name: projectName, key, avatarUrls } = project;
 
   useEffect(() => {
     requestJira(`/rest/api/2/project/${projectId}`)
@@ -114,47 +104,6 @@ export const ProjectDetails = (props: ProjectDetailsProps) => {
     [] as LevelToIssueTypeMap
   );
 
-  const hierarchy = levelToIssueTypes.map(
-    (projectIssueTypes, hierarchyLevel) => {
-      if (projectIssueTypes !== undefined) {
-        const issueTypesList = projectIssueTypes
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((issueType) => {
-            const {
-              id: issueTypeId,
-              name: issueTypeName,
-              statuses,
-            } = issueType;
-            const storageKey = generateProjectIssueTypeStatusesStorageKey({
-              projectId,
-              issueTypeId,
-            });
-            const fullIssueType = allIssueTypes.find(
-              (issueType) => issueType.id === issueTypeId
-            );
-            return (
-              <IssueTypeStatuses
-                key={storageKey}
-                issueTypeIconUrl={fullIssueType?.iconUrl}
-                issueTypeId={issueTypeId}
-                issueTypeName={issueTypeName}
-                statuses={statuses}
-                storageKey={storageKey}
-              />
-            );
-          });
-        return (
-          <Stack space="space.200">
-            <Heading level="h500">
-              Hierarchy Level: {hierarchyLevel + 1}
-            </Heading>
-            <Stack space="space.200">{issueTypesList}</Stack>
-          </Stack>
-        );
-      }
-    }
-  );
-
   // Unfortunately it is not possible for Custom UI to load images from the URLs provided in the REST API
   // responses. It is necessary to generate a URL using the product host domain rather than the api.atlassian.com
   // domain. performing this step will ensure that there are no broken images.
@@ -166,18 +115,25 @@ export const ProjectDetails = (props: ProjectDetailsProps) => {
 
   return (
     <Stack space="space.200">
-      <Inline alignBlock="center" space="space.100">
-        <Image style={{ height: 24 }} src={conertedImageUrl}></Image>
-        <Heading level="h600">{`${projectName} (${key})`}</Heading>
-      </Inline>
+      {!projectAdminView && (
+        <Inline alignBlock="center" space="space.100">
+          <Image style={{ height: 24 }} src={conertedImageUrl}></Image>
+          <Heading level="h600">{`${projectName} (${key})`}</Heading>
+        </Inline>
+      )}
       <Stack space="space.250">
         <Stack space="space.100">
-          <Heading level="h500">Preferences</Heading>
+          {!projectAdminView && <Heading level="h500">Preferences</Heading>}
           <ProjectConfig
             storageKey={generateProjectPreferencesStorageKey({ projectId })}
           />
+          <ProjectStartAndEndFields projectId={projectId} />
         </Stack>
-        {hierarchy.reverse()}
+        <IssueMappingForHierarchyLevels
+          allIssueTypes={allIssueTypes}
+          levelToIssueTypes={levelToIssueTypes}
+          projectId={projectId}
+        />
       </Stack>
     </Stack>
   );

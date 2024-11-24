@@ -22,17 +22,35 @@ export async function run(event: UpdateEvent) {
     `Detected that ${event.issue.key} has been updated`,
     JSON.stringify(changelogItems)
   );
+  const issueIdOrKey = event.issue.id;
+  const issue = (await fetchIssue({ issueIdOrKey })).data;
+  const { id: issueId, fields: issueFields } = issue;
+  const { parent: parentRef, project, customfield_10020: sprint } = issueFields;
 
-  const preferredDateFields = await getPreferredDateFields({});
+  const isIssueProjectSupported = await isProjectSupported({
+    issueId,
+    projectId: project.id,
+  });
+
+  if (!isIssueProjectSupported) {
+    console.log(
+      `Issue ${event.issue.key} is not supported by the project preferences`
+    );
+    return;
+  }
+
+  const projectPreferences: ProjectPreferences | undefined = await storage.get(
+    generateProjectPreferencesStorageKey({ projectId: project.id })
+  );
+
+  const preferredDateFields = await getPreferredDateFields({
+    projectPreferences,
+  });
 
   if (startOrEndDateFieldHasUpdated({ changelogItems, preferredDateFields })) {
     console.log(
       `Issue ${event.issue.key} was updated with start and/or end date changes`
     );
-    const issueIdOrKey = event.issue.id;
-    const issue = (await fetchIssue({ issueIdOrKey })).data;
-    const { fields: issueFields } = issue;
-    const { parent: parentRef } = issueFields;
 
     // TODO: Should we also validate that the current issue dates that have been set are valid?
 
@@ -62,17 +80,8 @@ export async function run(event: UpdateEvent) {
     (change) => change.field === "status"
   );
 
-  const issueIdOrKey = event.issue.key;
-  const issue = (await fetchIssue({ issueIdOrKey })).data;
-  const { id: issueId, fields: issueFields } = issue;
-  const { parent: parentRef, project, customfield_10020: sprint } = issueFields;
-
   const sprintChangeLogItem = getSprintChangeLogItem({ changelogItems });
   if (sprintChangeLogItem) {
-    const projectPreferences: ProjectPreferences | undefined =
-      await storage.get(
-        generateProjectPreferencesStorageKey({ projectId: project.id })
-      );
     if (
       projectPreferences !== undefined &&
       projectPreferences.sprintDatesEnabled === true
